@@ -1,0 +1,45 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
+        <title>Giao dịch và thanh toán</title>
+        <th:block th:fragment="extraHead">
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        </th:block>
+    </head>
+    <body>
+        <div class="admin-shell">
+            <aside th:replace="~{base :: sidebar}"></aside>
+            <main class="admin-main">
+                <h1 class="h3 mb-4">Quản lý giao dịch và doanh thu</h1>
+                <section class="panel mb-4">
+                    <form class="row g-3" th:action="@{/admin/payments}" method="get">
+                        <div class="col-md-5"><label class="form-label">Provider</label><select class="form-select" name="providerId"><option value="">Chọn provider</option><option th:each="p : ${providers}" th:value="${p.id}" th:text="${p.companyName + ' - ' + p.businessType}"></option></select></div>
+                        <div class="col-md-3"><label class="form-label">Từ ngày</label><input class="form-control" type="date" name="fromDate" th:value="${fromDate}"></div>
+                        <div class="col-md-3"><label class="form-label">Đến ngày</label><input class="form-control" type="date" name="toDate" th:value="${toDate}"></div>
+                        <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary w-100">Lọc</button></div>
+                    </form>
+                </section>
+                <section class="panel" th:if="${revenue != null}">
+                    <h2 class="h5 mb-3">Doanh thu provider</h2>
+                    <div class="metric-card mb-4"><span>Tổng doanh thu</span><strong th:text="${revenue}">0</strong></div>
+                    <canvas id="revenueChart" height="120"></canvas>
+                </section>
+            </main>
+        </div>
+        <th:block th:replace="~{base :: scripts(~{::extraScripts})}">
+            <th:block th:fragment="extraScripts">
+                <script th:inline="javascript">
+                    const revenueValue = Number(/*[[${revenue ?: 0}]]*/ 0);
+                    const ctx = document.getElementById('revenueChart');
+                    if (ctx) {
+                        new Chart(ctx, {
+                            type: 'doughnut',
+                            data: { labels: ['Doanh thu'], datasets: [{ data: [revenueValue], backgroundColor: ['#16a34a'] }] },
+                            options: { plugins: { legend: { position: 'bottom' } } }
+                        });
+                    }
+                </script>
+            </th:block>
+        </th:block>
+    </body>
+</html>

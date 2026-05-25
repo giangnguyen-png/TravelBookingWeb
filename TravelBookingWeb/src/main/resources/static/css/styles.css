@@ -1,0 +1,118 @@
+body {
+    background: #f5f7fb;
+    color: #172033;
+}
+
+.admin-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    background: #111827;
+    color: #fff;
+    flex: 0 0 250px;
+    padding: 24px 18px;
+}
+
+.admin-sidebar h4 {
+    font-weight: 700;
+    margin-bottom: 22px;
+}
+
+.admin-sidebar a {
+    color: #d1d5db;
+    display: block;
+    padding: 10px 12px;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+
+.admin-sidebar a:hover {
+    background: #1f2937;
+    color: #fff;
+}
+
+.admin-main {
+    flex: 1;
+    padding: 28px;
+}
+
+.panel,
+.metric-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.panel {
+    padding: 20px;
+}
+
+.metric-card {
+    padding: 18px;
+}
+
+.metric-card span {
+    color: #6b7280;
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.metric-card strong {
+    display: block;
+    font-size: 1.8rem;
+}
+
+.auth-page {
+    align-items: center;
+    display: flex;
+    min-height: 100vh;
+    justify-content: center;
+}
+
+.auth-box {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 28px;
+    width: min(420px, calc(100% - 32px));
+}
+
+.timeline {
+    display: grid;
+    gap: 14px;
+}
+
+.timeline-item {
+    border-left: 4px solid #2563eb;
+    padding: 8px 0 8px 14px;
+}
+
+.timeline-item strong,
+.timeline-item span {
+    display: block;
+}
+
+.timeline-item span {
+    color: #6b7280;
+}
+
+@media (max-width: 900px) {
+    .admin-shell {
+        display: block;
+    }
+
+    .admin-sidebar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .admin-sidebar h4 {
+        grid-column: 1 / -1;
+    }
+}

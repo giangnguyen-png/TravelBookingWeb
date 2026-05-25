@@ -1,0 +1,39 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
+        <title>Quản lý đánh giá</title>
+        <th:block th:fragment="extraHead"></th:block>
+    </head>
+    <body>
+        <div class="admin-shell">
+            <aside th:replace="~{base :: sidebar}"></aside>
+            <main class="admin-main">
+                <h1 class="h3 mb-4">Quản lý đánh giá và phản hồi</h1>
+                <section class="panel mb-4">
+                    <form class="row g-3" th:action="@{/admin/reviews}" method="get">
+                        <div class="col-md-8">
+                            <label class="form-label">Provider</label>
+                            <select class="form-select" name="providerId">
+                                <option value="">Chọn provider</option>
+                                <option th:each="p : ${providers}" th:value="${p.id}" th:text="${p.companyName + ' - ' + p.businessType}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100">Xem đánh giá</button></div>
+                    </form>
+                </section>
+                <section class="panel" th:if="${reviewsData != null}">
+                    <div class="d-flex gap-4 mb-3">
+                        <div><span class="text-secondary">Rating TB</span><strong class="d-block" th:text="${reviewsData.averageRating}">0</strong></div>
+                        <div><span class="text-secondary">Tổng đánh giá</span><strong class="d-block" th:text="${reviewsData.totalReviews}">0</strong></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead><tr><th>Khách hàng</th><th>Rating</th><th>Nội dung</th><th>Ngày tạo</th></tr></thead>
+                            <tbody><tr th:each="r : ${reviewsData.items}"><td th:text="${r.customerId.fullName}"></td><td><span class="badge text-bg-warning" th:text="${r.rating}"></span></td><td th:text="${r.comment}"></td><td th:text="${r.createdAt}"></td></tr></tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </body>
+</html>

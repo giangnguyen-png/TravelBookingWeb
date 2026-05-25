@@ -1,0 +1,64 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
+        <title>Duyệt provider</title>
+        <th:block th:fragment="extraHead"></th:block>
+    </head>
+    <body>
+        <div class="admin-shell">
+            <aside th:replace="~{base :: sidebar}"></aside>
+            <main class="admin-main">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0">Duyệt và xác minh provider</h1>
+                    <form class="d-flex gap-2" th:action="@{/admin/providers}" method="get">
+                        <select class="form-select" name="status">
+                            <option value="PENDING">PENDING</option>
+                            <option value="APPROVED">APPROVED</option>
+                            <option value="REJECTED">REJECTED</option>
+                        </select>
+                        <button class="btn btn-outline-primary">Lọc</button>
+                    </form>
+                </div>
+                <section class="panel">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Công ty</th>
+                                    <th>Loại hình</th>
+                                    <th>Trạng thái</th>
+                                    <th>Tài khoản</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="p : ${providers}">
+                                    <td th:text="${p.id}"></td>
+                                    <td th:text="${p.companyName}"></td>
+                                    <td th:text="${p.businessType}"></td>
+                                    <td><span class="badge text-bg-info" th:text="${p.verificationStatus}"></span></td>
+                                    <td th:text="${p.userId != null ? p.userId.username : ''}"></td>
+                                    <td class="text-end">
+                                        <form class="d-inline"
+                                              th:if="${p.verificationStatus.name() != 'APPROVED'}"
+                                              th:action="@{/admin/providers/{id}/status(id=${p.id})}" method="post">
+                                            <input type="hidden" name="status" value="APPROVED">
+                                            <button class="btn btn-sm btn-success">Duyệt</button>
+                                        </form>
+                                        <form class="d-inline"
+                                              th:if="${p.verificationStatus.name() != 'REJECTED'}"
+                                              th:action="@{/admin/providers/{id}/status(id=${p.id})}" method="post">
+                                            <input type="hidden" name="status" value="REJECTED">
+                                            <button class="btn btn-sm btn-outline-danger">Từ chối</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </body>
+</html>

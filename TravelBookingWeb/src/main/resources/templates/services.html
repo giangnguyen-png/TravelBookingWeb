@@ -1,0 +1,158 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
+        <title>Quản lý dịch vụ</title>
+        <th:block th:fragment="extraHead"></th:block>
+    </head>
+    <body>
+        <div class="admin-shell">
+            <aside th:replace="~{base :: sidebar}"></aside>
+            <main class="admin-main">
+                <h1 class="h3 mb-4">Quản lý dịch vụ du lịch</h1>
+                <div class="alert alert-danger" th:if="${err != null}" th:text="${err}"></div>
+
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#hotels" type="button">Khách sạn</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#rooms" type="button">Phòng</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tours" type="button">Tour</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#flights" type="button">Vé máy bay</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#buses" type="button">Vé xe</button></li>
+                </ul>
+
+                <div class="tab-content">
+                    <section class="tab-pane fade show active" id="hotels">
+                        <div class="panel mb-4">
+                            <h2 class="h5 mb-3">Thêm / sửa khách sạn</h2>
+                            <form class="row g-3" th:action="@{/admin/services/hotels}" th:object="${hotel}" method="post" enctype="multipart/form-data">
+                                <input type="hidden" th:field="*{id}">
+                                <input type="hidden" th:field="*{createdAt}">
+                                <input type="hidden" th:field="*{thumbnail}">
+                                <div class="col-md-4"><label class="form-label">Tên khách sạn</label><input class="form-control" th:field="*{hotelName}"></div>
+                                <div class="col-md-4"><label class="form-label">Địa chỉ</label><input class="form-control" th:field="*{address}"></div>
+                                <div class="col-md-4"><label class="form-label">Ảnh</label><input class="form-control" type="file" accept="image/*" th:field="*{thumbnailFile}"></div>
+                                <div class="col-md-6"><label class="form-label">Địa điểm</label><select class="form-select" th:field="*{locationId}"><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.province + ', ' + l.country}"></option></select></div>
+                                <div class="col-md-6"><label class="form-label">Provider</label><select class="form-select" th:field="*{providerId}"><option th:each="p : ${providers}" th:value="${p.id}" th:text="${p.companyName + ' - ' + p.businessType}"></option></select></div>
+                                <div class="col-12" th:if="*{thumbnail != null && !thumbnail.isBlank()}"><img class="rounded border" th:src="*{thumbnail}" alt="Hotel thumbnail" height="72"></div>
+                                <div class="col-12"><label class="form-label">Mô tả</label><textarea class="form-control" th:field="*{description}" rows="2"></textarea></div>
+                                <div class="col-12"><button class="btn btn-primary">Lưu khách sạn</button></div>
+                            </form>
+                        </div>
+                        <div class="panel table-responsive">
+                            <table class="table align-middle">
+                                <thead><tr><th>ID</th><th>Tên</th><th>Địa chỉ</th><th>Provider</th><th></th></tr></thead>
+                                <tbody>
+                                    <tr th:each="h : ${hotels}">
+                                        <td th:text="${h.id}"></td>
+                                        <td th:text="${h.hotelName}"></td>
+                                        <td th:text="${h.address}"></td>
+                                        <td th:text="${h.providerId.companyName}"></td>
+                                        <td class="text-end">
+                                            <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/services/hotels/{id}(id=${h.id})}">Sửa</a>
+                                            <form class="d-inline" th:action="@{/admin/services/hotels/{id}/delete(id=${h.id})}" method="post"><button class="btn btn-sm btn-outline-danger">Xóa</button></form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="tab-pane fade" id="rooms">
+                        <div class="panel mb-4">
+                            <h2 class="h5 mb-3">Thêm phòng khách sạn</h2>
+                            <form class="row g-3" th:action="@{/admin/services/rooms}" th:object="${room}" method="post" enctype="multipart/form-data">
+                                <input type="hidden" th:field="*{id}">
+                                <input type="hidden" th:field="*{image}">
+                                <div class="col-md-3"><label class="form-label">Tên phòng</label><input class="form-control" th:field="*{roomName}"></div>
+                                <div class="col-md-3"><label class="form-label">Loại phòng</label><select class="form-select" th:field="*{roomType}"><option th:each="rt : ${roomTypes}" th:value="${rt}" th:text="${rt}"></option></select></div>
+                                <div class="col-md-3"><label class="form-label">Giá/đêm</label><input class="form-control" th:field="*{pricePerNight}"></div>
+                                <div class="col-md-3"><label class="form-label">Số phòng</label><input class="form-control" th:field="*{availableRooms}"></div>
+                                <div class="col-md-6"><label class="form-label">Khách sạn</label><select class="form-select" th:field="*{hotelId}"><option th:each="h : ${hotels}" th:value="${h.id}" th:text="${h.hotelName}"></option></select></div>
+                                <div class="col-md-6"><label class="form-label">Ảnh</label><input class="form-control" type="file" accept="image/*" th:field="*{imageFile}"></div>
+                                <div class="col-12"><label class="form-label">Mô tả</label><textarea class="form-control" th:field="*{description}" rows="2"></textarea></div>
+                                <div class="col-12"><button class="btn btn-primary">Lưu phòng</button></div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <section class="tab-pane fade" id="tours">
+                        <div class="panel mb-4">
+                            <h2 class="h5 mb-3">Thêm tour</h2>
+                            <form class="row g-3" th:action="@{/admin/services/tours}" th:object="${tour}" method="post" enctype="multipart/form-data">
+                                <input type="hidden" th:field="*{id}">
+                                <input type="hidden" th:field="*{createdAt}">
+                                <input type="hidden" th:field="*{thumbnail}">
+                                <div class="col-md-4"><label class="form-label">Tên tour</label><input class="form-control" th:field="*{title}"></div>
+                                <div class="col-md-2"><label class="form-label">Ngày đi</label><input class="form-control" type="datetime-local" th:field="*{departureDate}"></div>
+                                <div class="col-md-2"><label class="form-label">Số ngày</label><input class="form-control" th:field="*{durationDays}"></div>
+                                <div class="col-md-2"><label class="form-label">Giá</label><input class="form-control" th:field="*{price}"></div>
+                                <div class="col-md-2"><label class="form-label">Chỗ trống</label><input class="form-control" th:field="*{availableSlots}"></div>
+                                <div class="col-md-4"><label class="form-label">Điểm đi</label><select class="form-select" th:field="*{departureLocationId}"><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.province}"></option></select></div>
+                                <div class="col-md-4"><label class="form-label">Điểm đến</label><select class="form-select" th:field="*{destinationLocationId}"><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.province}"></option></select></div>
+                                <div class="col-md-4"><label class="form-label">Provider</label><select class="form-select" th:field="*{providerId}"><option th:each="p : ${providers}" th:value="${p.id}" th:text="${p.companyName}"></option></select></div>
+                                <div class="col-md-6"><label class="form-label">Ảnh</label><input class="form-control" type="file" accept="image/*" th:field="*{thumbnailFile}"></div>
+                                <div class="col-md-6"><label class="form-label">Mô tả</label><input class="form-control" th:field="*{description}"></div>
+                                <div class="col-12"><button class="btn btn-primary">Lưu tour</button></div>
+                            </form>
+                        </div>
+                        <div class="panel table-responsive">
+                            <table class="table align-middle">
+                                <thead><tr><th>ID</th><th>Tour</th><th>Ngày đi</th><th>Giá</th><th></th></tr></thead>
+                                <tbody><tr th:each="t : ${tours}"><td th:text="${t.id}"></td><td th:text="${t.title}"></td><td th:text="${t.departureDate}"></td><td th:text="${t.price}"></td><td class="text-end"><form th:action="@{/admin/services/tours/{id}/delete(id=${t.id})}" method="post"><button class="btn btn-sm btn-outline-danger">Xóa</button></form></td></tr></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="tab-pane fade" id="flights">
+                        <div class="panel mb-4">
+                            <h2 class="h5 mb-3">Thêm vé máy bay</h2>
+                            <form class="row g-3" th:action="@{/admin/services/flights}" th:object="${flight}" method="post" enctype="multipart/form-data">
+                                <input type="hidden" th:field="*{id}">
+                                <input type="hidden" th:field="*{thumbnail}">
+                                <div class="col-md-3"><label class="form-label">Mã chuyến</label><input class="form-control" th:field="*{flightCode}"></div>
+                                <div class="col-md-3"><label class="form-label">Giờ đi</label><input class="form-control" type="datetime-local" th:field="*{departureTime}"></div>
+                                <div class="col-md-3"><label class="form-label">Giờ đến</label><input class="form-control" type="datetime-local" th:field="*{arrivalTime}"></div>
+                                <div class="col-md-3"><label class="form-label">Giá</label><input class="form-control" th:field="*{price}"></div>
+                                <div class="col-md-3"><label class="form-label">Ghế trống</label><input class="form-control" th:field="*{availableSeats}"></div>
+                                <div class="col-md-3"><label class="form-label">Điểm đi</label><select class="form-select" th:field="*{departureLocationId}"><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.province}"></option></select></div>
+                                <div class="col-md-3"><label class="form-label">Điểm đến</label><select class="form-select" th:field="*{arrivalLocationId}"><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.province}"></option></select></div>
+                                <div class="col-md-3"><label class="form-label">Provider</label><select class="form-select" th:field="*{providerId}"><option th:each="p : ${providers}" th:value="${p.id}" th:text="${p.companyName}"></option></select></div>
+                                <div class="col-md-4"><label class="form-label">Ảnh</label><input class="form-control" type="file" accept="image/*" th:field="*{thumbnailFile}"></div>
+                                <div class="col-12"><button class="btn btn-primary">Lưu chuyến bay</button></div>
+                            </form>
+                        </div>
+                        <div class="panel table-responsive">
+                            <table class="table align-middle">
+                                <thead><tr><th>ID</th><th>Mã</th><th>Giờ đi</th><th>Giá</th><th></th></tr></thead>
+                                <tbody><tr th:each="f : ${flights}"><td th:text="${f.id}"></td><td th:text="${f.flightCode}"></td><td th:text="${f.departureTime}"></td><td th:text="${f.price}"></td><td class="text-end"><form th:action="@{/admin/services/flights/{id}/delete(id=${f.id})}" method="post"><button class="btn btn-sm btn-outline-danger">Xóa</button></form></td></tr></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="tab-pane fade" id="buses">
+                        <div class="panel mb-4">
+                            <h2 class="h5 mb-3">Thêm vé xe</h2>
+                            <form class="row g-3" th:action="@{/admin/services/bus-trips}" th:object="${busTrip}" method="post">
+                                <input type="hidden" th:field="*{id}">
+                                <div class="col-md-3"><label class="form-label">Giờ đi</label><input class="form-control" type="datetime-local" th:field="*{departureTime}"></div>
+                                <div class="col-md-3"><label class="form-label">Giờ đến</label><input class="form-control" type="datetime-local" th:field="*{arrivalTime}"></div>
+                                <div class="col-md-2"><label class="form-label">Giá</label><input class="form-control" th:field="*{price}"></div>
+                                <div class="col-md-2"><label class="form-label">Ghế trống</label><input class="form-control" th:field="*{availableSeats}"></div>
+                                <div class="col-md-3"><label class="form-label">Điểm đi</label><select class="form-select" th:field="*{departureLocationId}"><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.province}"></option></select></div>
+                                <div class="col-md-3"><label class="form-label">Điểm đến</label><select class="form-select" th:field="*{arrivalLocationId}"><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.province}"></option></select></div>
+                                <div class="col-md-4"><label class="form-label">Provider</label><select class="form-select" th:field="*{providerId}"><option th:each="p : ${providers}" th:value="${p.id}" th:text="${p.companyName}"></option></select></div>
+                                <div class="col-12"><button class="btn btn-primary">Lưu chuyến xe</button></div>
+                            </form>
+                        </div>
+                        <div class="panel table-responsive">
+                            <table class="table align-middle">
+                                <thead><tr><th>ID</th><th>Giờ đi</th><th>Giá</th><th>Ghế</th><th></th></tr></thead>
+                                <tbody><tr th:each="b : ${busTrips}"><td th:text="${b.id}"></td><td th:text="${b.departureTime}"></td><td th:text="${b.price}"></td><td th:text="${b.availableSeats}"></td><td class="text-end"><form th:action="@{/admin/services/bus-trips/{id}/delete(id=${b.id})}" method="post"><button class="btn btn-sm btn-outline-danger">Xóa</button></form></td></tr></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+        <th:block th:replace="~{base :: scripts(~{})}"></th:block>
+    </body>
+</html>

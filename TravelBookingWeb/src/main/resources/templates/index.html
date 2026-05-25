@@ -1,0 +1,79 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
+        <title>Admin Dashboard</title>
+        <th:block th:fragment="extraHead">
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        </th:block>
+    </head>
+    <body>
+        <div class="admin-shell">
+            <aside th:replace="~{base :: sidebar}"></aside>
+            <main class="admin-main">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="h3 mb-1">Dashboard thống kê</h1>
+                    </div>
+                    <a class="btn btn-primary" th:href="@{/logout}">Đăng xuất</a>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4 col-xl-2"><div class="metric-card"><span>Người dùng</span><strong th:text="${usersCount}">0</strong></div></div>
+                    <div class="col-md-4 col-xl-2"><div class="metric-card"><span>Provider chờ duyệt</span><strong th:text="${pendingProvidersCount}">0</strong></div></div>
+                    <div class="col-md-4 col-xl-2"><div class="metric-card"><span>Khách sạn</span><strong th:text="${hotelsCount}">0</strong></div></div>
+                    <div class="col-md-4 col-xl-2"><div class="metric-card"><span>Tour</span><strong th:text="${toursCount}">0</strong></div></div>
+                    <div class="col-md-4 col-xl-2"><div class="metric-card"><span>Vé máy bay</span><strong th:text="${flightsCount}">0</strong></div></div>
+                    <div class="col-md-4 col-xl-2"><div class="metric-card"><span>Vé xe</span><strong th:text="${busTripsCount}">0</strong></div></div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <section class="panel">
+                            <h2 class="h5 mb-3">Số lượng dịch vụ đang hoạt động</h2>
+                            <canvas id="serviceChart" height="130"></canvas>
+                        </section>
+                    </div>
+                    <div class="col-lg-4">
+                        <section class="panel">
+                            <h2 class="h5 mb-3">Báo cáo nhanh</h2>
+                            <div class="list-group list-group-flush">
+                                <a class="list-group-item list-group-item-action" th:href="@{/admin/providers}">Duyệt provider mới</a>
+                                <a class="list-group-item list-group-item-action" th:href="@{/admin/payments}">Xem doanh thu provider</a>
+                                <a class="list-group-item list-group-item-action" th:href="@{/admin/reviews}">Theo dõi đánh giá</a>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <th:block th:replace="~{base :: scripts(~{::extraScripts})}">
+            <th:block th:fragment="extraScripts">
+                <script th:inline="javascript">
+                    const serviceData = [
+                        /*[[${hotelsCount}]]*/ 0,
+                        /*[[${toursCount}]]*/ 0,
+                        /*[[${flightsCount}]]*/ 0,
+                        /*[[${busTripsCount}]]*/ 0
+                    ];
+                    new Chart(document.getElementById('serviceChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: ['Khách sạn', 'Tour', 'Máy bay', 'Xe khách'],
+                            datasets: [{
+                                label: 'Số dịch vụ',
+                                data: serviceData,
+                                backgroundColor: ['#2563eb', '#16a34a', '#f59e0b', '#dc2626']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                        }
+                    });
+                </script>
+            </th:block>
+        </th:block>
+    </body>
+</html>

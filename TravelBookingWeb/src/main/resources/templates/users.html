@@ -1,0 +1,88 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
+        <title>Quản lý người dùng</title>
+        <th:block th:fragment="extraHead"></th:block>
+    </head>
+    <body>
+        <div class="admin-shell">
+            <aside th:replace="~{base :: sidebar}"></aside>
+            <main class="admin-main">
+                <h1 class="h3 mb-4">Quản lý người dùng</h1>
+
+                <section class="panel mb-4">
+                    <h2 class="h5 mb-3">Tạo / cập nhật tài khoản</h2>
+                    <form class="row g-3" th:action="@{/admin/users}" th:object="${user}" method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:field="*{id}">
+                        <input type="hidden" th:field="*{createdAt}">
+                        <input type="hidden" th:field="*{avatar}">
+                        <div class="col-md-4">
+                            <label class="form-label">Họ tên</label>
+                            <input class="form-control" th:field="*{fullName}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Username</label>
+                            <input class="form-control" th:field="*{username}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" th:field="*{email}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Vai trò</label>
+                            <select class="form-select" th:field="*{role}">
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Mật khẩu</label>
+                            <input class="form-control" th:field="*{password}">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Avatar</label>
+                            <input class="form-control" type="file" accept="image/*" th:field="*{avatarFile}">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end" th:if="*{avatar != null && !avatar.isBlank()}">
+                            <img class="rounded border object-fit-cover" th:src="*{avatar}" alt="Avatar" width="40" height="40">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" type="submit">Lưu</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="panel">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Họ tên</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Vai trò</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="u : ${users}">
+                                    <td th:text="${u.id}"></td>
+                                    <td th:text="${u.fullName}"></td>
+                                    <td th:text="${u.username}"></td>
+                                    <td th:text="${u.email}"></td>
+                                    <td><span class="badge text-bg-secondary" th:text="${u.role}"></span></td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/users/{id}(id=${u.id})}">Sửa</a>
+                                        <form class="d-inline" th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post">
+                                            <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </body>
+</html>

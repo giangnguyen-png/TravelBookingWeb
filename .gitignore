@@ -1,0 +1,15 @@
+target/
+.idea/
+.vscode/
+*.class
+*.log
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# NetBeans
+nbproject/private/
+
+# OS
+.DS_Store
+Thumbs.db

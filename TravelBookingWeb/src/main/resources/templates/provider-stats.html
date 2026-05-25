@@ -1,0 +1,24 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
+        <title>Thống kê provider</title>
+        <th:block th:fragment="extraHead"></th:block>
+    </head>
+    <body>
+        <div class="admin-shell">
+            <aside th:replace="~{base :: sidebar}"></aside>
+            <main class="admin-main">
+                <h1 class="h3 mb-4">Thống kê provider</h1>
+                <section class="panel">
+                    <div class="metric-card mb-3"><span>Doanh thu</span><strong th:text="${revenue}">0</strong></div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead><tr><th>ID booking</th><th>Loại</th><th>Tổng tiền</th><th>Trạng thái</th></tr></thead>
+                            <tbody><tr th:each="b : ${bookings}"><td th:text="${b.id}"></td><td th:text="${b.bookingType}"></td><td th:text="${b.totalPrice}"></td><td th:text="${b.status}"></td></tr></tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </body>
+</html>
