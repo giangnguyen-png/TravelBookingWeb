@@ -43,10 +43,21 @@ public class SpringSecurityConfigs {
                 if (rawPassword == null || encodedPassword == null) {
                     return false;
                 }
+                encodedPassword = normalizeStoredPassword(encodedPassword);
                 if (encodedPassword.startsWith("$2a$") || encodedPassword.startsWith("$2b$") || encodedPassword.startsWith("$2y$")) {
                     return bcrypt.matches(rawPassword, encodedPassword);
                 }
                 return rawPassword.toString().equals(encodedPassword);
+            }
+
+            private String normalizeStoredPassword(String encodedPassword) {
+                String normalizedPassword = encodedPassword.trim();
+                while (normalizedPassword.length() >= 2
+                        && ((normalizedPassword.startsWith("'") && normalizedPassword.endsWith("'"))
+                        || (normalizedPassword.startsWith("\"") && normalizedPassword.endsWith("\"")))) {
+                    normalizedPassword = normalizedPassword.substring(1, normalizedPassword.length() - 1).trim();
+                }
+                return normalizedPassword;
             }
         };
     }

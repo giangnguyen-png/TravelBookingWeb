@@ -70,8 +70,12 @@ public class UserServiceImpl implements UserService {
             if (currentUser != null) {
                 user.setPassword(currentUser.getPassword());
             }
-        } else if (user.getPassword() != null && !isEncodedPassword(user.getPassword())) {
-            user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+        } else if (user.getPassword() != null) {
+            if (isEncodedPassword(user.getPassword())) {
+                user.setPassword(normalizeStoredPassword(user.getPassword()));
+            } else {
+                user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+            }
         }
 
         String avatar = this.cloudinaryService.upload(user.getAvatarFile(), "travel/users");
@@ -82,7 +86,18 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean isEncodedPassword(String password) {
-        return password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$");
+        String normalizedPassword = normalizeStoredPassword(password);
+        return normalizedPassword.startsWith("$2a$") || normalizedPassword.startsWith("$2b$") || normalizedPassword.startsWith("$2y$");
+    }
+
+    private String normalizeStoredPassword(String password) {
+        String normalizedPassword = password.trim();
+        while (normalizedPassword.length() >= 2
+                && ((normalizedPassword.startsWith("'") && normalizedPassword.endsWith("'"))
+                || (normalizedPassword.startsWith("\"") && normalizedPassword.endsWith("\"")))) {
+            normalizedPassword = normalizedPassword.substring(1, normalizedPassword.length() - 1).trim();
+        }
+        return normalizedPassword;
     }
 
     @Override
