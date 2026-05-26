@@ -18,6 +18,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +40,8 @@ public class ApiAuthController {
     private UserService userService;
     @Autowired
     private ProviderService providerService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/auth/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> params) {
@@ -76,11 +79,8 @@ public class ApiAuthController {
     @PostMapping("/auth/login")
     public ResponseEntity<?> login(@RequestBody Users user) throws Exception {
         Users u = this.userService.getUserByUsername(user.getUsername());
-        if (u != null && u.getPassword().equals(user.getPassword())) {
-            return new ResponseEntity<>(Map.of(
-                    "token", JwtUtils.generateToken(u.getUsername()),
-                    "user", u
-            ), HttpStatus.OK);
+        if (u != null && this.passwordEncoder.matches(user.getPassword(), u.getPassword())) {
+            return ResponseEntity.ok(Map.of("token", JwtUtils.generateToken(u.getUsername())));
         }
 
         return new ResponseEntity<>("Invalid username or password", HttpStatus.UNAUTHORIZED);

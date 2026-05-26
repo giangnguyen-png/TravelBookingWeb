@@ -5,6 +5,7 @@
 package com.mycompany.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mycompany.enums.UserRole;
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
@@ -74,6 +75,7 @@ public class Users implements Serializable {
     @NotNull
     @Size(min = 1, max = 255)
     @Column(name = "password")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @Size(max = 255)
     @Column(name = "avatar")

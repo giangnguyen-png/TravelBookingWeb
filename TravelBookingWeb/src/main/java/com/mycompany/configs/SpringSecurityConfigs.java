@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -30,15 +31,22 @@ public class SpringSecurityConfigs {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+        BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
         return new PasswordEncoder() {
             @Override
             public String encode(CharSequence rawPassword) {
-                return rawPassword == null ? null : rawPassword.toString();
+                return rawPassword == null ? null : bcrypt.encode(rawPassword);
             }
 
             @Override
             public boolean matches(CharSequence rawPassword, String encodedPassword) {
-                return rawPassword != null && encodedPassword != null && rawPassword.toString().equals(encodedPassword);
+                if (rawPassword == null || encodedPassword == null) {
+                    return false;
+                }
+                if (encodedPassword.startsWith("$2a$") || encodedPassword.startsWith("$2b$") || encodedPassword.startsWith("$2y$")) {
+                    return bcrypt.matches(rawPassword, encodedPassword);
+                }
+                return rawPassword.toString().equals(encodedPassword);
             }
         };
     }

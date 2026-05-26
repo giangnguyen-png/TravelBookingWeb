@@ -16,6 +16,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -29,6 +30,8 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepo;
     @Autowired
     private CloudinaryService cloudinaryService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public List<Users> getUsers() {
@@ -62,11 +65,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Users addOrUpdateUser(Users user) {
+        if (user.getId() != null && (user.getPassword() == null || user.getPassword().isBlank())) {
+            Users currentUser = this.userRepo.getUserById(user.getId());
+            if (currentUser != null) {
+                user.setPassword(currentUser.getPassword());
+            }
+        } else if (user.getPassword() != null && !isEncodedPassword(user.getPassword())) {
+            user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+        }
+
         String avatar = this.cloudinaryService.upload(user.getAvatarFile(), "travel/users");
         if (avatar != null) {
             user.setAvatar(avatar);
         }
         return this.userRepo.addOrUpdateUser(user);
+    }
+
+    private boolean isEncodedPassword(String password) {
+        return password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$");
     }
 
     @Override
