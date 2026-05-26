@@ -31,7 +31,7 @@ INSERT INTO users (
     'Nguyễn Văn A',
     'admin',
     'admin@travel.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'ADMIN'
 ),
@@ -39,7 +39,7 @@ INSERT INTO users (
     'Lê Thị B',
     'provider1',
     'lethib@travel.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'PROVIDER'
 ),
@@ -47,7 +47,7 @@ INSERT INTO users (
     'Trần Văn C',
     'provider2',
     'tranvanc@travel.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'PROVIDER'
 ),
@@ -55,7 +55,7 @@ INSERT INTO users (
     'Phạm Thị D',
     'provider3',
     'phamthid@travel.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'PROVIDER'
 ),
@@ -63,7 +63,7 @@ INSERT INTO users (
     'Hoàng Văn E',
     'provider4',
     'hoangvane@travel.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'PROVIDER'
 ),
@@ -71,7 +71,7 @@ INSERT INTO users (
     'Vũ Thị F',
     'provider5',
     'vuthif@travel.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'PROVIDER'
 ),
@@ -79,7 +79,7 @@ INSERT INTO users (
     'Đặng Văn G',
     'customer1',
     'dangvang@gmail.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'CUSTOMER'
 ),
@@ -87,7 +87,7 @@ INSERT INTO users (
     'Bùi Thị H',
     'customer2',
     'buithih@gmail.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'CUSTOMER'
 ),
@@ -95,7 +95,7 @@ INSERT INTO users (
     'Đỗ Văn I',
     'customer3',
     'dovani@gmail.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'CUSTOMER'
 ),
@@ -103,7 +103,7 @@ INSERT INTO users (
     'Ngô Thị K',
     'customer4',
     'ngothik@gmail.com',
-    '$2a$10$EIXZaYVK1fsbw1ZfbX3OXePaWxn96p36n0e6Q6vJx0W0fvkYlCY2K',
+    '$2a$10$7LM2fB5R9Nz/D6E/YIscueOYtu1tdm4Dz2BKJl3UyNsLNWe9jhlxS',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg',
     'CUSTOMER'
 );
