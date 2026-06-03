@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
+
 package com.mycompany.repositories;
 
 import com.mycompany.enums.PaymentStatus;
@@ -9,10 +6,6 @@ import com.mycompany.pojo.Payments;
 import java.math.BigDecimal;
 import java.util.Date;
 
-/**
- *
- * @author nguyen
- */
 public interface PaymentRepository {
     Payments addOrUpdatePayment(Payments payment);
     Payments getPaymentByBookingId(Long bookingId);

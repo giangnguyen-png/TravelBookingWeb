@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.mycompany.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,10 +27,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-/**
- *
- * @author nguyen
- */
+
 @Entity
 @Table(name = "bookings")
 @NamedQueries({
@@ -56,7 +50,7 @@ public class Bookings implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "booking_type")
     private BookingType bookingType;
-    // @Max(value=?)  @Min(value=?)//if you know range of your decimal fields consider using these annotations to enforce field validation
+
     @Basic(optional = false)
     @NotNull
     @Column(name = "total_price")
@@ -81,7 +75,6 @@ public class Bookings implements Serializable {
     private HotelBookings hotelBookings;
     @JoinColumn(name = "customer_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
-    @JsonIgnore
     private Users customerId;
 
     public Bookings() {
@@ -186,7 +179,7 @@ public class Bookings implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
+
         if (!(object instanceof Bookings)) {
             return false;
         }
@@ -201,5 +194,5 @@ public class Bookings implements Serializable {
     public String toString() {
         return "com.mycompany.pojo.Bookings[ id=" + id + " ]";
     }
-    
+
 }

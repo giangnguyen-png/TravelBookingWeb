@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.mycompany.pojo;
 
 
@@ -31,10 +28,7 @@ import java.util.Date;
 import java.util.Set;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- *
- * @author nguyen
- */
+
 @Entity
 @Table(name = "tours")
 @NamedQueries({
@@ -73,7 +67,7 @@ public class Tours implements Serializable {
     @NotNull
     @Column(name = "duration_days")
     private int durationDays;
-    // @Max(value=?)  @Min(value=?)//if you know range of your decimal fields consider using these annotations to enforce field validation
+
     @Basic(optional = false)
     @NotNull
     @Column(name = "price")
@@ -103,7 +97,6 @@ public class Tours implements Serializable {
     private Locations destinationLocationId;
     @JoinColumn(name = "provider_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
-    @JsonIgnore
     private ProviderProfiles providerId;
 
     public Tours() {
@@ -243,7 +236,7 @@ public class Tours implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
+
         if (!(object instanceof Tours)) {
             return false;
         }
@@ -258,5 +251,5 @@ public class Tours implements Serializable {
     public String toString() {
         return "com.mycompany.pojo.Tours[ id=" + id + " ]";
     }
-    
+
 }

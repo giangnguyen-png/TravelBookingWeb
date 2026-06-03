@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.mycompany.controllers;
 
 import com.mycompany.enums.BusinessType;
@@ -31,10 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- *
- * @author nguyen
- */
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin
@@ -48,7 +42,7 @@ public class ApiAuthController {
     private PasswordEncoder passwordEncoder;
 
     @PostMapping(value = "/auth/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<?> register(@RequestParam Map<String, String> params, // Sửa @ModelAttribute thành @RequestParam
+public ResponseEntity<?> register(@RequestParam Map<String, String> params,
                                   @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) {
         String username = params.get("username");
         String email = params.get("email");
@@ -85,6 +79,13 @@ public ResponseEntity<?> register(@RequestParam Map<String, String> params, // S
     public ResponseEntity<?> login(@RequestBody Users user) throws Exception {
         Users u = this.userService.getUserByUsername(user.getUsername());
         if (u != null && this.passwordEncoder.matches(user.getPassword(), u.getPassword())) {
+            if (u.getRole() == UserRole.PROVIDER) {
+                ProviderProfiles provider = this.providerService.getProviderByUserId(u.getId());
+                if (provider == null || provider.getVerificationStatus() != VerificationStatus.APPROVED) {
+                    return new ResponseEntity<>("Đợi admin duyệt", HttpStatus.FORBIDDEN);
+                }
+            }
+
             return ResponseEntity.ok(Map.of("token", JwtUtils.generateToken(u.getUsername())));
         }
 

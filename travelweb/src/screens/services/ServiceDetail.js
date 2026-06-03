@@ -3,11 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Spinner, Badge, Form, Tab, Tabs, Table, Alert } from 'react-bootstrap';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import { useContext } from 'react';
-import { MyUserContext } from '../../configs/MyContext'; 
+import { MyUserContext } from '../../configs/MyContext';
 
 const placeholderImage = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
 
-// Hàm lấy tên hiển thị chuẩn chỉnh dựa theo các Model Entity Java
+
 const getTitle = (service, type) => {
     if (type === 'FLIGHT') return `${service?.airlineName || 'Hãng hàng không'} - ${service?.flightCode || ''}`;
     if (type === 'BUS') return `${service?.brandName || 'Nhà xe'} (${service?.busType || 'Xe khách'})`;
@@ -19,7 +19,7 @@ const getTitle = (service, type) => {
     );
 };
 
-// Định dạng giá tiền VNĐ
+
 const getPrice = (service) => {
     return Number(
         service?.price ||
@@ -29,7 +29,23 @@ const getPrice = (service) => {
     ).toLocaleString('vi-VN');
 };
 
-// Định dạng ngày giờ hiển thị
+const getProviderId = (service) => {
+    const candidates = [
+        service?.providerId,
+        service?.provider_id,
+        service?.provider,
+        service?.userId
+    ];
+
+    for (const item of candidates) {
+        if (!item) continue;
+        return typeof item === 'object' ? item.id : item;
+    }
+
+    return null;
+};
+
+
 const formatDateTime = (dateTimeString) => {
     if (!dateTimeString) return "Chưa cập nhật";
     try {
@@ -52,7 +68,7 @@ const ServiceDetail = () => {
     const user = useContext(MyUserContext);
 
     const [service, setService] = useState(null);
-    const [rooms, setRooms] = useState([]); 
+    const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [reviews, setReviews] = useState([]);
     const [rating, setRating] = useState(5);
@@ -68,11 +84,11 @@ const ServiceDetail = () => {
             try {
                 setLoading(true);
                 let baseEndpoint = '';
-                
+
                 if (type === 'TOUR') baseEndpoint = endpoints['tours'];
                 else if (type === 'HOTEL') baseEndpoint = endpoints['hotels'];
                 else if (type === 'FLIGHT') baseEndpoint = endpoints['flights'];
-                else if (type === 'BUS') baseEndpoint = endpoints['busTrips']; 
+                else if (type === 'BUS') baseEndpoint = endpoints['busTrips'];
 
                 if (!baseEndpoint) {
                     console.error("Không tìm thấy endpoint cho loại dịch vụ:", type);
@@ -91,11 +107,7 @@ const ServiceDetail = () => {
 
                 if (type === 'HOTEL') {
                     try {
-                        let roomEndpoint = baseEndpoint;
-                        if (!roomEndpoint.endsWith('/')) {
-                            roomEndpoint = `${roomEndpoint}/`;
-                        }
-                        roomEndpoint = `${roomEndpoint}${id}/rooms`;
+                        const roomEndpoint = endpoints['hotel-rooms'].replace(':hotelId', id);
 
                         const roomsRes = await Apis.get(roomEndpoint);
                         setRooms(roomsRes.data);
@@ -113,26 +125,20 @@ const ServiceDetail = () => {
         fetchServiceDetail();
     }, [type, id]);
 
-   // 1. SỬA LẠI EFFECT TẢI DANH SÁCH BÌNH LUẬN BAN ĐẦU (BỎ CHỮ /api THỪA)
+
 useEffect(() => {
     const loadReviews = async () => {
-        // Trích xuất providerId phòng thủ
-        let providerId = service?.providerId || service?.provider_id;
-        if (!providerId && service?.userId) {
-            providerId = service.userId.id || service.userId;
-        }
-        if (!providerId && service?.provider) {
-            providerId = service.provider.id || service.provider;
-        }
+
+        const providerId = getProviderId(service);
 
         if (providerId && providerId !== 'undefined') {
             try {
-                // Gọi chuẩn API (Lưu ý xóa chữ /api thừa nếu baseURL của bạn đã cấu hình sẵn)
-                const res = await Apis.get(`/providers/${providerId}/reviews`);
-                
-                // Mấu chốt: Java trả về một Map có key là "items" chứa mảng bình luận thực tế
+
+                const res = await Apis.get(endpoints['provider-reviews'].replace(':providerId', providerId));
+
+
                 if (res.data && res.data.items) {
-                    setReviews(res.data.items); // Lấy đúng mảng để hiển thị lập tức khi vào trang
+                    setReviews(res.data.items);
                 } else if (Array.isArray(res.data)) {
                     setReviews(res.data);
                 }
@@ -147,7 +153,7 @@ useEffect(() => {
     }
 }, [service]);
 
-// 2. SỬA LẠI HÀM SUBMITREVIEW (BỎ ĐƯỜNG DẪN SAI PHƯƠNG THỨC GÂY LỖI 405)
+
 const submitReview = async (e) => {
     e.preventDefault();
     const currentCustomerId = user?.id;
@@ -155,15 +161,12 @@ const submitReview = async (e) => {
         alert("Bạn cần đăng nhập tài khoản trước khi gửi đánh giá!");
         return;
     }
-    
-    let currentProviderId = service?.providerId || service?.provider_id;
-    if (!currentProviderId && service?.userId) {
-        currentProviderId = service.userId.id || service.userId;
+
+    const currentProviderId = getProviderId(service);
+    if (!currentProviderId) {
+        alert("Không xác định được nhà cung cấp của dịch vụ này!");
+        return;
     }
-    if (!currentProviderId && service?.provider) {
-        currentProviderId = service.provider.id || service.provider;
-    }
-    if (!currentProviderId) currentProviderId = 1;
 
     try {
         const payload = {
@@ -173,15 +176,15 @@ const submitReview = async (e) => {
             comment: comment || ""
         };
 
-        // Gửi POST tạo review lên backend cũ
+
         await authApis().post(endpoints['reviews'], payload);
         alert('Gửi đánh giá thành công!');
         setComment('');
 
-        // Tải lại danh sách mới và bóc tách mảng .items lập tức để cập nhật UI
-        const res = await Apis.get(`/providers/${currentProviderId}/reviews`);
+
+        const res = await Apis.get(endpoints['provider-reviews'].replace(':providerId', currentProviderId));
         if (res.data && res.data.items) {
-            setReviews(res.data.items); 
+            setReviews(res.data.items);
         } else if (Array.isArray(res.data)) {
             setReviews(res.data);
         }
@@ -196,11 +199,11 @@ const handleBooking = (roomItem = null) => {
         alert('Vui lòng đăng nhập để thực hiện đặt chỗ!');
         return;
     }
-    
-    // Nếu đặt phòng khách sạn dùng ID của phòng, ngược lại dùng ID của dịch vụ
+
+
     const targetId = roomItem ? roomItem.id : id;
-    
-    // Khớp 100% với Route trong App.js: /booking/:type/:id
+
+
     navigate(`/booking/${type}/${targetId}`);
 };
 
@@ -270,24 +273,24 @@ const handleBooking = (roomItem = null) => {
                         ) : (
                             <div>
                             <h5 className="text-dark fw-bold mb-3 border-bottom pb-2">Thông Tin Lịch Trình Chi Tiết</h5>
-                            
-                            {/* 1. XỬ LÝ TOURS - TỰ ĐỘNG BÓC TÁCH TỪ TIÊU ĐỀ THEO JSON THỰC TẾ */}
+
+
                             {type === 'TOUR' && (
                                 <div className="mb-3" style={{ fontSize: '1rem', lineHeight: '1.8' }}>
                                     <p className="mb-1">
                                         📍 <b>Điểm khởi hành:</b> {
-                                            service.departureLocationId?.name || 
+                                            service.departureLocationId?.name ||
                                             service.departureLocation?.name ||
-                                            (service.title && service.title.includes("-") ? 
-                                                (service.title.split("-")[0].toUpperCase().includes("HCM") ? "Hồ Chí Minh" : service.title.split("-")[0].replace("Tour", "").trim()) 
+                                            (service.title && service.title.includes("-") ?
+                                                (service.title.split("-")[0].toUpperCase().includes("HCM") ? "Hồ Chí Minh" : service.title.split("-")[0].replace("Tour", "").trim())
                                                 : "Chưa cập nhật")
                                         }
                                     </p>
                                     <p className="mb-1">
                                         🏁 <b>Điểm đến:</b> {
-                                            service.destinationLocationId?.name || 
+                                            service.destinationLocationId?.name ||
                                             service.destinationLocation?.name ||
-                                            (service.title && service.title.includes("-") ? 
+                                            (service.title && service.title.includes("-") ?
                                                 (service.title.split("-")[1].trim().startsWith("Đà Lạt") ? "Đà Lạt" : service.title.split("-")[1].trim().split(" ")[0])
                                                 : "Chưa cập nhật")
                                         }
@@ -304,21 +307,21 @@ const handleBooking = (roomItem = null) => {
                                 </div>
                             )}
 
-                            {/* 2. XỬ LÝ MÁY BAY (FLIGHT) - PHÒNG THỦ KHÔNG LO THIẾU OBJECT SÂN BAY */}
+
                             {type === 'FLIGHT' && (
                                 <div className="mb-3" style={{ fontSize: '1rem', lineHeight: '1.8' }}>
                                     <p className="mb-1">✈️ <b>Hãng bay:</b> {service.airlineName || 'Chưa cập nhật'}</p>
                                     <p className="mb-1">
                                         🛫 <b>Sân bay khởi hành:</b> {
-                                            service.departureLocationId?.name || 
+                                            service.departureLocationId?.name ||
                                             service.departureLocation?.name ||
-                                            // Mẹo bốc từ mã chuyến bay hoặc tên hãng nếu API null địa điểm
+
                                             (service.flightCode && service.flightCode.toUpperCase().startsWith("VN") ? "Sân bay Nội Bài (Hà Nội)" : "Hồ Chí Minh (SGN)")
                                         }
                                     </p>
                                     <p className="mb-1">
                                         🛬 <b>Sân bay hạ cánh:</b> {
-                                            service.arrivalLocationId?.name || 
+                                            service.arrivalLocationId?.name ||
                                             service.arrivalLocation?.name ||
                                             (service.flightCode && service.flightCode.toUpperCase().includes("DL") ? "Sân bay Liên Khương (Đà Lạt)" : "Đà Nẵng (DAD)")
                                         }
@@ -329,21 +332,21 @@ const handleBooking = (roomItem = null) => {
                                 </div>
                             )}
 
-                            {/* 3. XỬ LÝ XE KHÁCH (BUS) - PHÒNG THỦ KHÔNG LO THIẾU OBJECT BẾN XE */}
+
                             {type === 'BUS' && (
                                 <div className="mb-3" style={{ fontSize: '1rem', lineHeight: '1.8' }}>
                                     <p className="mb-1">🚌 <b>Nhà xe quản lý:</b> {service.brandName || 'Chưa cập nhật'}</p>
                                     <p className="mb-1">🚐 <b>Dòng xe:</b> {service.busType || 'Chưa cập nhật'}</p>
                                     <p className="mb-1">
                                         📍 <b>Bến xe xuất phát:</b> {
-                                            service.departureLocationId?.name || 
+                                            service.departureLocationId?.name ||
                                             service.departureLocation?.name ||
                                             (service.brandName && service.brandName.includes("Phương Trang") ? "Bến xe Miền Tây (TP.HCM)" : "Bến xe Giáp Bát (Hà Nội)")
                                         }
                                     </p>
                                     <p className="mb-1">
                                         🏁 <b>Bến xe điểm đến:</b> {
-                                            service.arrivalLocationId?.name || 
+                                            service.arrivalLocationId?.name ||
                                             service.arrivalLocation?.name ||
                                             (service.brandName && service.brandName.includes("Đà Lạt") ? "Bến xe Liên tỉnh Đà Lạt" : "Bến xe Trung tâm Đà Nẵng")
                                         }
@@ -368,7 +371,7 @@ const handleBooking = (roomItem = null) => {
                 </Col>
             </Row>
 
-            {/* BẢNG PHÒNG KHÁCH SẠN */}
+
             {type === 'HOTEL' && (
                 <Row className="mb-5">
                     <Col>
@@ -396,8 +399,8 @@ const handleBooking = (roomItem = null) => {
                                             {rooms.map((room) => (
                                                 <tr key={room.id}>
                                                     <td>
-                                                        <img 
-                                                            src={room.image || placeholderImage} 
+                                                        <img
+                                                            src={room.image || placeholderImage}
                                                             alt={room.roomName}
                                                             style={{ width: '100px', height: '70px', objectFit: 'cover', borderRadius: '6px' }}
                                                         />
@@ -418,9 +421,9 @@ const handleBooking = (roomItem = null) => {
                                                     </td>
                                                     <td className="text-center">{room.availableRooms}</td>
                                                     <td>
-                                                        <Button 
-                                                            variant="success" 
-                                                            size="sm" 
+                                                        <Button
+                                                            variant="success"
+                                                            size="sm"
                                                             className="px-3 fw-bold"
                                                             disabled={room.availableRooms <= 0}
                                                             onClick={() => handleBooking(room)}

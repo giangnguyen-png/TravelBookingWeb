@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Card, Form, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import cookies from 'react-cookies';
-import { MyUserContext } from '../../configs/MyContext'; 
+import { MyUserContext } from '../../configs/MyContext';
 
 const ServiceBooking = () => {
     const { type, id } = useParams();
     const navigate = useNavigate();
-    const currentUser = useContext(MyUserContext); 
+    const currentUser = useContext(MyUserContext);
 
     const [quantity, setQuantity] = useState(1);
     const [paymentMethod, setPaymentMethod] = useState('CASH');
@@ -16,6 +16,22 @@ const ServiceBooking = () => {
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    const apiType = {
+        TOUR: 'tours',
+        HOTEL: 'hotels',
+        FLIGHT: 'flights',
+        BUS: 'bus-trips',
+        tours: 'tours',
+        hotels: 'hotels',
+        flights: 'flights',
+        'bus-trips': 'bus-trips'
+    }[type] || {
+        TOUR: 'tours',
+        HOTEL: 'hotels',
+        FLIGHT: 'flights',
+        BUS: 'bus-trips'
+    }[(type || '').toUpperCase()] || type;
 
     const getQuantityLabel = (serviceType) => {
         switch (serviceType) {
@@ -31,10 +47,10 @@ const ServiceBooking = () => {
         const loadServiceDetail = async () => {
             try {
                 setLoading(true);
-                // Khớp chính xác API path theo thiết kế Backend
-                let apiPath = `/${type}/${id}`;
-                if (type === 'hotels') {
-                    apiPath = `/rooms/${id}`;
+
+                let apiPath = `/${apiType}/${id}`;
+                if (apiType === 'hotels') {
+                    apiPath = `${endpoints.rooms}/${id}`;
                 }
 
                 const res = await Apis.get(apiPath);
@@ -47,10 +63,10 @@ const ServiceBooking = () => {
                 setLoading(false);
             }
         };
-        if (type && id) {
+        if (apiType && id) {
             loadServiceDetail();
         }
-    }, [type, id]);
+    }, [apiType, id]);
 
     if (loading) return <Container className="text-center my-5 py-5"><Spinner animation="border" variant="primary" /></Container>;
     if (error || !detail) return <Container className="my-5"><Alert variant="danger">{error || "Dịch vụ không tồn tại!"}</Alert></Container>;
@@ -75,36 +91,36 @@ const ServiceBooking = () => {
                 customerId: String(currentUser.id)
             };
 
-            if (type === "tours") {
+            if (apiType === "tours") {
                 bookingData.bookingType = "TOUR";
                 bookingData.tourId = String(id);
                 bookingData.numberOfPeople = String(quantity);
             }
-            if (type === "hotels") {
+            if (apiType === "hotels") {
                 bookingData.bookingType = "HOTEL";
                 bookingData.roomId = String(id);
                 bookingData.numberOfRooms = String(quantity);
                 bookingData.checkInDate = "2026-01-01";
                 bookingData.checkOutDate = "2026-01-02";
             }
-            if (type === "flights") {
+            if (apiType === "flights") {
                 bookingData.bookingType = "TRANSPORT";
                 bookingData.transportType = "FLIGHT";
                 bookingData.transportServiceId = String(id);
                 bookingData.seatNumber = "A1";
             }
-            if (type === "bus-trips") {
+            if (apiType === "bus-trips") {
                 bookingData.bookingType = "TRANSPORT";
                 bookingData.transportType = "BUS";
                 bookingData.transportServiceId = String(id);
                 bookingData.seatNumber = "A1";
             }
 
-            let res = await Apis.post('/bookings', bookingData, {
+            let res = await Apis.post(endpoints.bookings, bookingData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            await authApis().post('/payments', {
+            await authApis().post(endpoints.payments, {
                 bookingId: String(res.data.id),
                 paymentMethod: paymentMethod,
                 paymentStatus: 'PAID'
@@ -134,7 +150,7 @@ const ServiceBooking = () => {
                             </p>
                         </div>
                         <Form.Group className="mb-4">
-                            <Form.Label className="fw-bold">{getQuantityLabel(type)}</Form.Label>
+                            <Form.Label className="fw-bold">{getQuantityLabel(apiType)}</Form.Label>
                             <Form.Control
                                 type="number"
                                 min="1"

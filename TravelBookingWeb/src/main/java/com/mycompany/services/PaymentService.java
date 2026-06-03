@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
+
 package com.mycompany.services;
 
 import com.mycompany.enums.PaymentStatus;
@@ -10,10 +7,6 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 
-/**
- *
- * @author nguyen
- */
 public interface PaymentService {
     Payments addOrUpdatePayment(Payments payment);
     Payments createPayment(Map<String, String> params);

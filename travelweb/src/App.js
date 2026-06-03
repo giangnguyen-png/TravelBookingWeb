@@ -1,7 +1,7 @@
 import { useReducer } from 'react';
 import { Container } from 'react-bootstrap';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
-import cookies from 'react-cookies'; // Thêm để giữ đăng nhập
+import cookies from 'react-cookies';
 import { MyDispatchContext, MyUserContext } from './configs/MyContext';
 import Home from './screens/home/Home';
 import User from './screens/user/User';
@@ -31,7 +31,7 @@ const AppContent = () => {
   return (
     <Container fluid={isProviderPage}>
       {!isProviderPage && <Header />}
-      
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/user" element={<User />} />
@@ -47,7 +47,7 @@ const AppContent = () => {
 };
 
 function App() {
-  // Lấy dữ liệu user từ cookie lên ngay khi mở trang web (trị tận gốc bệnh F5 mất acc)
+
   const [user, dispatch] = useReducer(myReducer, cookies.load('user') || null);
 
   return (

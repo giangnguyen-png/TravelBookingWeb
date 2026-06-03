@@ -26,12 +26,12 @@ const SearchForm = ({ onSearchSuccess }) => {
 
         try {
             setLoading(true);
-            
-            // Khớp nối chuẩn xác 100% các Key từ file Apis.js bạn vừa gửi
+
+
             let endpoint = endpoints['tours'];
             if (search.type === "Khách sạn") endpoint = endpoints['hotels'];
             else if (search.type === "Vé máy bay") endpoint = endpoints['flights'];
-            else if (search.type === "Xe khách") endpoint = endpoints['busTrips']; // Đã sửa từ 'bus-trips' thành 'busTrips'
+            else if (search.type === "Xe khách") endpoint = endpoints['busTrips'];
 
             const queryParams = new URLSearchParams();
             if (search.location) queryParams.append("location", search.location);
@@ -39,7 +39,7 @@ const SearchForm = ({ onSearchSuccess }) => {
             if (search.departureTime) queryParams.append("departureTime", search.departureTime);
 
             const res = await Apis.get(`${endpoint}?${queryParams.toString()}`);
-            
+
             if (onSearchSuccess) {
                 onSearchSuccess(res.data, search.type);
             }

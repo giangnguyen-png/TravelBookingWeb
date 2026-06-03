@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
         <title>Quản lý dịch vụ</title>
@@ -195,7 +195,7 @@
         <th:block th:replace="~{base :: scripts(~{})}"></th:block>
         <script th:inline="javascript">
             const params = new URLSearchParams(window.location.search);
-            const activeTab = params.get('tab') || /*[[${activeTab}]]*/ null;
+            const activeTab = params.get('tab') || [[${activeTab}]];
             if (activeTab === 'rooms') {
                 const roomsTab = document.querySelector('[data-bs-target="#rooms"]');
                 if (roomsTab && window.bootstrap) {

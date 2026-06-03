@@ -92,7 +92,7 @@ const CompareServices = () => {
 
         try {
             setLoading(true);
-            const res = await Apis.get("/compare", {
+            const res = await Apis.get(endpoints.compare, {
                 params: {
                     type,
                     ids: `${firstId},${secondId}`

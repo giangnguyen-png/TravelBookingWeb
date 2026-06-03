@@ -1,13 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.mycompany.controllers;
 
+import com.mycompany.enums.BookingStatus;
+import com.mycompany.pojo.Bookings;
 import com.mycompany.services.BookingService;
-import com.mycompany.services.PaymentService;
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,17 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- *
- * @author nguyen
- */
 @RestController
 @RequestMapping("/api/provider")
 @CrossOrigin
 public class ApiProviderStatsController {
 
-    @Autowired
-    private PaymentService paymentService;
     @Autowired
     private BookingService bookingService;
 
@@ -40,8 +34,17 @@ public class ApiProviderStatsController {
         Date to = toDate != null && !toDate.isBlank() ? Date.valueOf(toDate) : null;
 
         Map<String, Object> data = new HashMap<>();
-        data.put("revenue", this.paymentService.sumRevenueByProvider(providerId, from, to));
-        data.put("bookings", this.bookingService.getBookingsByProviderId(providerId, Map.of()).size());
+        List<Bookings> bookings = this.bookingService.getBookingsByProviderId(providerId, Map.of());
+        BigDecimal revenue = bookings.stream()
+                .filter(b -> b.getStatus() == BookingStatus.PAID || b.getStatus() == BookingStatus.COMPLETED)
+                .filter(b -> b.getCreatedAt() != null)
+                .filter(b -> from == null || !b.getCreatedAt().before(from))
+                .filter(b -> to == null || !b.getCreatedAt().after(to))
+                .map(Bookings::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        data.put("revenue", revenue);
+        data.put("bookings", bookings.size());
 
         return new ResponseEntity<>(data, HttpStatus.OK);
     }

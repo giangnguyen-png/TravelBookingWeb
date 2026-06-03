@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.mycompany.repositories.impl;
 
 import java.sql.Timestamp;
@@ -11,10 +8,6 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import org.hibernate.query.Query;
 
-/**
- *
- * @author nguyen
- */
 final class RepositoryUtils {
 
     private RepositoryUtils() {

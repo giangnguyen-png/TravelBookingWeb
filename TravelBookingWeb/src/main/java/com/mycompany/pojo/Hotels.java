@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.mycompany.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,10 +27,7 @@ import java.util.Date;
 import java.util.Set;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- *
- * @author nguyen
- */
+
 @Entity
 @Table(name = "hotels")
 @NamedQueries({
@@ -77,7 +71,6 @@ public class Hotels implements Serializable {
     private Locations locationId;
     @JoinColumn(name = "provider_id", referencedColumnName = "id")
     @ManyToOne(optional = false)
-    @JsonIgnore
     private ProviderProfiles providerId;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "hotelId", fetch = FetchType.EAGER)
     @JsonIgnore
@@ -184,7 +177,7 @@ public class Hotels implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
+
         if (!(object instanceof Hotels)) {
             return false;
         }
@@ -201,11 +194,11 @@ public class Hotels implements Serializable {
     }
     public Long getPrice() {
         if (this.hotelRoomsSet != null && !this.hotelRoomsSet.isEmpty()) {
-            // Tự động lấy giá của phòng đầu tiên trong danh sạn làm giá gốc cho khách sạn
-            // Chuyển đổi từ BigDecimal của pricePerNight sang Long để đồng bộ với Tour/Vé xe
+
+
             return this.hotelRoomsSet.iterator().next().getPricePerNight().longValue();
         }
     return 0L;
     }
-    
+
 }

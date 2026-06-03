@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
         <title>Giao dịch và thanh toán</title>
@@ -29,7 +29,7 @@
         <th:block th:replace="~{base :: scripts(~{::extraScripts})}">
             <th:block th:fragment="extraScripts">
                 <script th:inline="javascript">
-                    const revenueValue = Number(/*[[${revenue ?: 0}]]*/ 0);
+                    const revenueValue = Number([[${revenue ?: 0}]]);
                     const ctx = document.getElementById('revenueChart');
                     if (ctx) {
                         new Chart(ctx, {

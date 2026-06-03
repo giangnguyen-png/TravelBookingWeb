@@ -7,16 +7,16 @@ import SearchForm from "./SearchForm";
 
 const ServiceCard = ({ item, typeParam }) => {
     const navigate = useNavigate();
-    
-    // 1. Map tên và hình ảnh chuẩn từ Backend
+
+
     const name = item.title || item.flightCode || item.hotelName || 'Chuyến xe khách';
     const image = item.thumbnail || item.image || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
 
-    // 2. Logic tính toán hiển thị giá chuyên nghiệp, phù hợp với từng loại dịch vụ
+
     let priceText = "Liên hệ giá";
-    
+
     if (typeParam === "HOTEL") {
-        // Nếu là Khách sạn, kiểm tra danh sách phòng để tìm mức giá thấp nhất (Giá từ...)
+
         if (item.hotelRoomsSet && item.hotelRoomsSet.length > 0) {
             const prices = item.hotelRoomsSet.map(r => r.pricePerNight).filter(p => p > 0);
             if (prices.length > 0) {
@@ -31,7 +31,7 @@ const ServiceCard = ({ item, typeParam }) => {
             priceText = "Xem giá phòng";
         }
     } else {
-        // Nếu là Tour, Vé máy bay, Xe khách -> Hiển thị giá cố định như bình thường
+
         const flatPrice = item.price || item.ticketPrice || 0;
         priceText = flatPrice > 0 ? `${Number(flatPrice).toLocaleString('vi-VN')} VNĐ` : "Liên hệ giá";
     }
@@ -50,8 +50,8 @@ const ServiceCard = ({ item, typeParam }) => {
                         {priceText}
                     </Card.Text>
                 </div>
-                <Button 
-                    variant="outline-primary" 
+                <Button
+                    variant="outline-primary"
                     className="w-100 border-2 fw-bold"
                     style={{ borderRadius: '8px' }}
                     onClick={() => navigate(`/services/${typeParam}/${idParam}`)}
@@ -77,7 +77,7 @@ const Home = () => {
                 setLoading(true);
                 const res = await Apis.get(endpoints['tours']);
                 setServices(res.data);
-                setCurrentType("TOUR"); // Mặc định hiển thị ban đầu là TOUR
+                setCurrentType("TOUR");
             } catch (err) {
                 console.error("Lỗi tải dịch vụ nổi bật:", err);
             } finally {
@@ -87,12 +87,12 @@ const Home = () => {
         loadHotServices();
     }, []);
 
-    // Hứng dữ liệu kết quả kèm theo loại hình dịch vụ được tìm kiếm từ SearchForm
+
     const handleSearchData = (data, searchType) => {
         setServices(data);
         setIsSearched(true);
-        
-        // Đồng bộ loại hình tìm kiếm để ServiceCard điều hướng chính xác
+
+
         if (searchType === "Khách sạn") setCurrentType("HOTEL");
         else if (searchType === "Vé máy bay") setCurrentType("FLIGHT");
         else if (searchType === "Xe khách") setCurrentType("BUS");
@@ -105,15 +105,15 @@ const Home = () => {
     const currentItems = safeServices.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(safeServices.length / itemsPerPage);
 
-    // console.log("KIỂM TRA PHÂN TRANG:", {
-    //     "Tổng số dịch vụ thu về từ BE": safeServices.length,
-    //     "Số dịch vụ hiển thị thực tế trên trang này": currentItems.length,
-    //     "Tổng số trang tính toán được": totalPages
-    // });
+
+
+
+
+
 
     return (
         <div>
-            <div 
+            <div
                 className="position-relative text-white text-center d-flex align-items-center justify-content-center"
                 style={{
                     backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800')`,
@@ -131,7 +131,7 @@ const Home = () => {
             <Container style={{ marginTop: '-50px', position: 'relative', zIndex: 10 }}>
                 <Row className="justify-content-center">
                     <Col md={10}>
-                        {/* Gọi SearchForm và truyền hàm callback chuẩn props */}
+
                         <SearchForm onSearchSuccess={handleSearchData} />
                     </Col>
                 </Row>
@@ -159,7 +159,7 @@ const Home = () => {
                             )}
                         </Row>
 
-                        {/* THANH ĐIỀU HƯỚNG BẤM CHUYỂN TRANG */}
+
                         {totalPages > 1 && (
                             <div className="d-flex justify-content-center mt-4">
                                 <ul className="pagination">
@@ -168,7 +168,7 @@ const Home = () => {
                                             Trước
                                         </button>
                                     </li>
-                                    
+
                                     {[...Array(totalPages)].map((_, index) => (
                                         <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
                                             <button className="page-link" onClick={() => setCurrentPage(index + 1)}>

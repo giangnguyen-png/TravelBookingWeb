@@ -1,9 +1,5 @@
 USE traveldb;
 
--- =====================================================
--- 1. USERS
--- =====================================================
-
 CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     full_name VARCHAR(100) NOT NULL,
@@ -108,10 +104,6 @@ INSERT INTO users (
     'CUSTOMER'
 );
 
--- =====================================================
--- 2. PROVIDER PROFILES
--- =====================================================
-
 CREATE TABLE provider_profiles (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT UNIQUE NOT NULL,
@@ -144,10 +136,6 @@ INSERT INTO provider_profiles (
 (5, 'Xe khách Phương Trang', 'BUS_COMPANY', 'APPROVED'),
 (6, 'Saigontourist', 'TOUR_COMPANY', 'PENDING');
 
--- =====================================================
--- 3. LOCATIONS
--- =====================================================
-
 CREATE TABLE locations (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     province VARCHAR(100) NOT NULL,
@@ -162,10 +150,6 @@ INSERT INTO locations (province, country) VALUES
 ('Đà Lạt', 'Việt Nam'),
 ('Phú Quốc', 'Việt Nam'),
 ('Sa Pa', 'Việt Nam');
-
--- =====================================================
--- 4. TOURS
--- =====================================================
 
 CREATE TABLE tours (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -225,10 +209,6 @@ INSERT INTO tours (
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg'
 );
 
--- =====================================================
--- 5. HOTELS
--- =====================================================
-
 CREATE TABLE hotels (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     provider_id BIGINT NOT NULL,
@@ -268,10 +248,6 @@ INSERT INTO hotels (
     'Bình Thạnh, TP.HCM',
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg'
 );
-
--- =====================================================
--- 6. HOTEL ROOMS
--- =====================================================
 
 CREATE TABLE hotel_rooms (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -318,10 +294,6 @@ INSERT INTO hotel_rooms (
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg'
 );
 
--- =====================================================
--- 7. FLIGHTS
--- =====================================================
-
 CREATE TABLE flights (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     provider_id BIGINT NOT NULL,
@@ -364,10 +336,6 @@ INSERT INTO flights (
     'https://res.cloudinary.com/dhdae2pwk/image/upload/v1768307214/media/courses/1_fk2vep.jpg'
 );
 
--- =====================================================
--- 8. BUS TRIPS
--- =====================================================
-
 CREATE TABLE bus_trips (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     provider_id BIGINT NOT NULL,
@@ -404,10 +372,6 @@ INSERT INTO bus_trips (
     40
 );
 
--- =====================================================
--- 9. BOOKINGS
--- =====================================================
-
 CREATE TABLE bookings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     customer_id BIGINT NOT NULL,
@@ -437,10 +401,6 @@ INSERT INTO bookings (
 (7, 'TOUR', 5000000.00, 'PAID'),
 (8, 'HOTEL', 3600000.00, 'PAID');
 
--- =====================================================
--- 10. TOUR BOOKINGS
--- =====================================================
-
 CREATE TABLE tour_bookings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     booking_id BIGINT UNIQUE NOT NULL,
@@ -458,10 +418,6 @@ INSERT INTO tour_bookings (
     number_of_people
 ) VALUES
 (1, 1, 2);
-
--- =====================================================
--- 11. HOTEL BOOKINGS
--- =====================================================
 
 CREATE TABLE hotel_bookings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -485,10 +441,6 @@ INSERT INTO hotel_bookings (
 ) VALUES
 (2, 1, '2026-06-10', '2026-06-13', 1);
 
--- =====================================================
--- 12. TRANSPORT BOOKINGS
--- =====================================================
-
 CREATE TABLE transport_bookings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     booking_id BIGINT UNIQUE NOT NULL,
@@ -501,10 +453,6 @@ CREATE TABLE transport_bookings (
     FOREIGN KEY (booking_id)
         REFERENCES bookings(id)
 );
-
--- =====================================================
--- 13. PAYMENTS
--- =====================================================
 
 CREATE TABLE payments (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -525,10 +473,6 @@ CREATE TABLE payments (
     FOREIGN KEY (booking_id)
         REFERENCES bookings(id)
 );
-
--- =====================================================
--- 14. REVIEWS
--- =====================================================
 
 CREATE TABLE reviews (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,

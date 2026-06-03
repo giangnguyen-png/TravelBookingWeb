@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.mycompany.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,10 +20,7 @@ import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- *
- * @author nguyen
- */
+
 @Entity
 @Table(name = "hotel_bookings")
 @NamedQueries({
@@ -137,7 +131,7 @@ public class HotelBookings implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
+
         if (!(object instanceof HotelBookings)) {
             return false;
         }
@@ -152,5 +146,5 @@ public class HotelBookings implements Serializable {
     public String toString() {
         return "com.mycompany.pojo.HotelBookings[ id=" + id + " ]";
     }
-    
+
 }

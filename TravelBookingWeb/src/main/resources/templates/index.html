@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
     <head th:replace="~{base :: head(~{::title}, ~{::extraHead})}">
         <title>Admin Dashboard</title>
@@ -51,10 +51,10 @@
             <th:block th:fragment="extraScripts">
                 <script th:inline="javascript">
                     const serviceData = [
-                        /*[[${hotelsCount}]]*/ 0,
-                        /*[[${toursCount}]]*/ 0,
-                        /*[[${flightsCount}]]*/ 0,
-                        /*[[${busTripsCount}]]*/ 0
+                        [[${hotelsCount}]],
+                        [[${toursCount}]],
+                        [[${flightsCount}]],
+                        [[${busTripsCount}]]
                     ];
                     new Chart(document.getElementById('serviceChart'), {
                         type: 'bar',

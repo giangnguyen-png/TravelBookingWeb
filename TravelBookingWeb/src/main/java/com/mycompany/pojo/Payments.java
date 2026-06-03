@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.mycompany.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -28,10 +25,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-/**
- *
- * @author nguyen
- */
+
 @Entity
 @Table(name = "payments")
 @NamedQueries({
@@ -57,7 +51,7 @@ public class Payments implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
     private PaymentStatus paymentStatus;
-    // @Max(value=?)  @Min(value=?)//if you know range of your decimal fields consider using these annotations to enforce field validation
+
     @Basic(optional = false)
     @NotNull
     @Column(name = "amount")
@@ -140,7 +134,7 @@ public class Payments implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
+
         if (!(object instanceof Payments)) {
             return false;
         }
@@ -155,5 +149,5 @@ public class Payments implements Serializable {
     public String toString() {
         return "com.mycompany.pojo.Payments[ id=" + id + " ]";
     }
-    
+
 }

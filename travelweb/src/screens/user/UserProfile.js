@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Container, Card, Row, Col, Badge, Spinner } from "react-bootstrap";
-import { authApis } from "../../configs/Apis";
+import { authApis, endpoints } from "../../configs/Apis";
 import { MyUserContext } from "../../configs/MyContext";
 import { useNavigate } from "react-router-dom";
 
@@ -18,8 +18,8 @@ const UserProfile = () => {
 
         const fetchHistory = async () => {
             try {
-                //Gọi đúng API của Backend: /bookings/me?customerId=...
-                let res = await authApis().get(`/bookings/me?customerId=${currentUser.id}`);
+
+                let res = await authApis().get(`${endpoints['my-bookings']}?customerId=${currentUser.id}`);
                 setHistory(res.data);
                 setLoading(false);
             } catch (err) {
@@ -37,12 +37,12 @@ const UserProfile = () => {
         <Container className="my-5">
             <h2 className="fw-bold mb-4 text-primary">👤 Trang Cá Nhân</h2>
             <Row>
-                {/* CỘT THÔNG TIN CÁ NHÂN */}
+
                 <Col md={4} className="mb-4">
                     <Card className="shadow-sm border-0 text-center p-4" style={{ borderRadius: '15px' }}>
-                        <Card.Img 
-                            variant="top" 
-                            src={currentUser.avatar || 'https://via.placeholder.com/150'} 
+                        <Card.Img
+                            variant="top"
+                            src={currentUser.avatar || 'https://via.placeholder.com/150'}
                             className="rounded-circle mx-auto mb-3"
                             style={{ width: '120px', height: '120px', objectFit: 'cover' }}
                         />
@@ -52,7 +52,7 @@ const UserProfile = () => {
                     </Card>
                 </Col>
 
-                {/* CỘT LỊCH SỬ ĐẶT VÉ */}
+
                 <Col md={8}>
                     <Card className="shadow-sm border-0 p-4" style={{ borderRadius: '15px' }}>
                         <h4 className="fw-bold mb-4">🛒 Lịch sử đặt dịch vụ</h4>
