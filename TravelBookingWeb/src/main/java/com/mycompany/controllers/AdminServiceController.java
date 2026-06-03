@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  *
@@ -52,15 +53,19 @@ public class AdminServiceController {
     private ProviderService providerService;
 
     @GetMapping
-    public String list(Model model) {
-        this.addCommonData(model);
-        this.addFormData(model, new Hotels(), new HotelRooms(), new Tours(), new Flights(), new BusTrips());
+    public String list(Model model, @RequestParam(value = "roomHotelId", required = false) Long roomHotelId) {
+        this.addCommonData(model, roomHotelId);
+        HotelRooms room = new HotelRooms();
+        if (roomHotelId != null) {
+            room.setHotelId(this.hotelService.getHotelById(roomHotelId));
+        }
+        this.addFormData(model, new Hotels(), room, new Tours(), new Flights(), new BusTrips());
         return "services";
     }
 
     @GetMapping("/hotels/{id}")
     public String editHotel(Model model, @PathVariable(value = "id") Long id) {
-        this.addCommonData(model);
+        this.addCommonData(model, null);
         this.addFormData(model, this.hotelService.getHotelById(id), new HotelRooms(), new Tours(), new Flights(), new BusTrips());
         return "services";
     }
@@ -85,16 +90,23 @@ public class AdminServiceController {
     public String saveRoom(Model model, @ModelAttribute(value = "room") HotelRooms room) {
         try {
             this.roomService.addOrUpdateRoom(room);
-            return "redirect:/admin/services";
+            Long hotelId = room.getHotelId() != null ? room.getHotelId().getId() : null;
+            return this.redirectToRooms(hotelId);
         } catch (IllegalArgumentException ex) {
-            return this.validationError(model, ex, new Hotels(), room, new Tours(), new Flights(), new BusTrips());
+            Long hotelId = room.getHotelId() != null ? room.getHotelId().getId() : null;
+            this.addCommonData(model, hotelId);
+            this.addFormData(model, new Hotels(), room, new Tours(), new Flights(), new BusTrips());
+            model.addAttribute("err", ex.getMessage());
+            model.addAttribute("activeTab", "rooms");
+            return "services";
         }
     }
 
     @PostMapping("/rooms/{id}/delete")
-    public String deleteRoom(@PathVariable(value = "id") Long id) {
+    public String deleteRoom(@PathVariable(value = "id") Long id,
+            @RequestParam(value = "roomHotelId", required = false) Long roomHotelId) {
         this.roomService.deleteRoom(id);
-        return "redirect:/admin/services";
+        return this.redirectToRooms(roomHotelId);
     }
 
     @PostMapping("/tours")
@@ -145,19 +157,23 @@ public class AdminServiceController {
         return "redirect:/admin/services";
     }
 
-    private void addCommonData(Model model) {
+    private void addCommonData(Model model, Long roomHotelId) {
         Map<String, String> params = Map.of("size", "20");
         model.addAttribute("hotels", this.hotelService.searchHotels(params));
+        model.addAttribute("hotelOptions", this.hotelService.searchHotels(Map.of("size", "1000")));
         model.addAttribute("tours", this.tourService.searchTours(params));
         model.addAttribute("flights", this.flightService.searchFlights(params));
         model.addAttribute("busTrips", this.busTripService.searchBusTrips(params));
         model.addAttribute("locations", this.locationService.getLocations());
         model.addAttribute("providers", this.providerService.getProvidersByStatus(VerificationStatus.APPROVED));
         model.addAttribute("roomTypes", RoomType.values());
+        model.addAttribute("selectedRoomHotelId", roomHotelId);
+        model.addAttribute("rooms", roomHotelId != null ? this.roomService.getRoomsByHotelId(roomHotelId) : java.util.List.of());
     }
 
     private String validationError(Model model, IllegalArgumentException ex, Hotels hotel, HotelRooms room, Tours tour, Flights flight, BusTrips busTrip) {
-        this.addCommonData(model);
+        Long roomHotelId = room != null && room.getHotelId() != null ? room.getHotelId().getId() : null;
+        this.addCommonData(model, roomHotelId);
         this.addFormData(model, hotel, room, tour, flight, busTrip);
         model.addAttribute("err", ex.getMessage());
         return "services";
@@ -169,5 +185,12 @@ public class AdminServiceController {
         model.addAttribute("tour", tour);
         model.addAttribute("flight", flight);
         model.addAttribute("busTrip", busTrip);
+    }
+
+    private String redirectToRooms(Long roomHotelId) {
+        if (roomHotelId == null) {
+            return "redirect:/admin/services?tab=rooms";
+        }
+        return "redirect:/admin/services?tab=rooms&roomHotelId=" + roomHotelId;
     }
 }
