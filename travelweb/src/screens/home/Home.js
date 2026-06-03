@@ -4,29 +4,57 @@ import { useNavigate } from "react-router-dom";
 import Apis, { endpoints } from "../../configs/Apis";
 import MySpinner from "../../components/MySpinner";
 import SearchForm from "./SearchForm";
-import cookies from 'react-cookies';
 
 const ServiceCard = ({ item, typeParam }) => {
     const navigate = useNavigate();
     
-    // Đã map đúng biến Backend: Tours(title), Flights(flightCode), Hotels(hotelName)
+    // 1. Map tên và hình ảnh chuẩn từ Backend
     const name = item.title || item.flightCode || item.hotelName || 'Chuyến xe khách';
-    const price = item.price || (item.hotelRoomsSet && item.hotelRoomsSet.length > 0 ? item.hotelRoomsSet[0].pricePerNight : 0);
-    const image = item.thumbnail || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
+    const image = item.thumbnail || item.image || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e';
+
+    // 2. Logic tính toán hiển thị giá chuyên nghiệp, phù hợp với từng loại dịch vụ
+    let priceText = "Liên hệ giá";
+    
+    if (typeParam === "HOTEL") {
+        // Nếu là Khách sạn, kiểm tra danh sách phòng để tìm mức giá thấp nhất (Giá từ...)
+        if (item.hotelRoomsSet && item.hotelRoomsSet.length > 0) {
+            const prices = item.hotelRoomsSet.map(r => r.pricePerNight).filter(p => p > 0);
+            if (prices.length > 0) {
+                const minPrice = Math.min(...prices);
+                priceText = `Giá từ: ${Number(minPrice).toLocaleString('vi-VN')} Đ / đêm`;
+            } else {
+                priceText = "Xem giá phòng";
+            }
+        } else if (item.price > 0) {
+            priceText = `Giá từ: ${Number(item.price).toLocaleString('vi-VN')} Đ / đêm`;
+        } else {
+            priceText = "Xem giá phòng";
+        }
+    } else {
+        // Nếu là Tour, Vé máy bay, Xe khách -> Hiển thị giá cố định như bình thường
+        const flatPrice = item.price || item.ticketPrice || 0;
+        priceText = flatPrice > 0 ? `${Number(flatPrice).toLocaleString('vi-VN')} VNĐ` : "Liên hệ giá";
+    }
+
+    const idParam = item.id;
 
     return (
         <Card className="shadow-sm border-0 mb-4 h-100" style={{ borderRadius: '15px', overflow: 'hidden' }}>
             <Card.Img variant="top" src={image} style={{ height: '200px', objectFit: 'cover' }} />
-            <Card.Body className="d-flex flex-column">
-                <Card.Title className="fw-bold fs-6 text-truncate text-dark">{name}</Card.Title>
-                <Card.Text className="text-danger fw-bold fs-5 mt-auto">
-                    {price > 0 ? `${Number(price).toLocaleString('vi-VN')} VNĐ` : "Liên hệ"}
-                </Card.Text>
+            <Card.Body className="d-flex flex-column justify-content-between">
+                <div>
+                    <Card.Title className="fw-bold text-dark text-truncate" style={{ fontSize: '1.15rem' }}>
+                        {name}
+                    </Card.Title>
+                    <Card.Text className={typeParam === "HOTEL" ? "text-primary fw-bold mb-3" : "text-danger fw-bold mb-3"} style={{ fontSize: '1rem' }}>
+                        {priceText}
+                    </Card.Text>
+                </div>
                 <Button 
-                    variant="primary" 
-                    className="w-100 mt-2 fw-bold" 
+                    variant="outline-primary" 
+                    className="w-100 border-2 fw-bold"
                     style={{ borderRadius: '8px' }}
-                    onClick={() => navigate(`/services/${typeParam}/${item.id}`)}
+                    onClick={() => navigate(`/services/${typeParam}/${idParam}`)}
                 >
                     Xem chi tiết
                 </Button>
@@ -38,152 +66,129 @@ const ServiceCard = ({ item, typeParam }) => {
 const Home = () => {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState({ location: "", type: "", departureTime: "", price: "" });
-    const [currentTypeParam, setCurrentTypeParam] = useState("tours");
     const [isSearched, setIsSearched] = useState(false);
-    const navigate = useNavigate();
-
-    const getEndpointKey = (type) => {
-        switch (type) {
-            case "Khách sạn": return "hotels";
-            case "Tour": return "tours";
-            case "Vé máy bay": return "flights";
-            case "Xe khách": return "busTrips";
-            default: return "tours"; 
-        }
-    };
-
-    const getTypeParam = (type) => {
-        switch (type) {
-            case "Khách sạn": return "hotels";
-            case "Tour": return "tours";
-            case "Vé máy bay": return "flights";
-            case "Xe khách": return "bus-trips";
-            default: return "tours";
-        }
-    };
+    const [currentType, setCurrentType] = useState("TOUR");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
 
     useEffect(() => {
-        const loadInitialData = async () => {
+        const loadHotServices = async () => {
             try {
                 setLoading(true);
-                let res = await Apis.get(endpoints["tours"]);
-                setServices(Array.isArray(res.data) ? res.data : []);
-                setCurrentTypeParam("tours");
-                setIsSearched(false);
+                const res = await Apis.get(endpoints['tours']);
+                setServices(res.data);
+                setCurrentType("TOUR"); // Mặc định hiển thị ban đầu là TOUR
             } catch (err) {
-                console.error(err);
-                setServices([]);
+                console.error("Lỗi tải dịch vụ nổi bật:", err);
             } finally {
                 setLoading(false);
             }
         };
-        loadInitialData();
+        loadHotServices();
     }, []);
 
-    const handleSearch = async () => {
-        // 🔒 KIỂM TRA BẢO MẬT: Bắt buộc đăng nhập mới cho tìm kiếm
-        const token = cookies.load('token');
-        if (!token) {
-            alert("Vui lòng đăng nhập tài khoản để sử dụng chức năng tìm kiếm!");
-            navigate('/user');
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const key = getEndpointKey(search.type);
-            const param = getTypeParam(search.type);
-            setCurrentTypeParam(param);
-            setIsSearched(true);
-
-            const queryParams = {};
-            if (search.location) queryParams.location = search.location;
-            if (search.departureTime) queryParams.departureTime = search.departureTime;
-            if (search.price) queryParams.price = search.price;
-
-            let res = await Apis.get(endpoints[key], { params: queryParams });
-            setServices(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
-            console.error(err);
-            setServices([]);
-        } finally {
-            setLoading(false);
-        }
+    // Hứng dữ liệu kết quả kèm theo loại hình dịch vụ được tìm kiếm từ SearchForm
+    const handleSearchData = (data, searchType) => {
+        setServices(data);
+        setIsSearched(true);
+        
+        // Đồng bộ loại hình tìm kiếm để ServiceCard điều hướng chính xác
+        if (searchType === "Khách sạn") setCurrentType("HOTEL");
+        else if (searchType === "Vé máy bay") setCurrentType("FLIGHT");
+        else if (searchType === "Xe khách") setCurrentType("BUS");
+        else setCurrentType("TOUR");
     };
 
+    const safeServices = Array.isArray(services) ? services : [];
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = safeServices.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(safeServices.length / itemsPerPage);
+
+    // console.log("KIỂM TRA PHÂN TRANG:", {
+    //     "Tổng số dịch vụ thu về từ BE": safeServices.length,
+    //     "Số dịch vụ hiển thị thực tế trên trang này": currentItems.length,
+    //     "Tổng số trang tính toán được": totalPages
+    // });
+
     return (
-        <>
-            <div
+        <div>
+            <div 
+                className="position-relative text-white text-center d-flex align-items-center justify-content-center"
                 style={{
-                    height: "400px",
-                    backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e')",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    position: "relative",
+                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    height: '60vh',
                 }}
             >
-                <div
-                    style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: "rgba(0,0,0,0.45)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexDirection: "column",
-                    }}
-                >
-                    <h1 className="text-white fw-bold text-center" style={{ fontSize: "3rem" }}>
-                        Khám phá thế giới cùng chúng tôi
-                    </h1>
-
-                    <p className="text-white fs-5">
-                        Đặt vé nhanh chóng - Trải nghiệm tuyệt vời
-                    </p>
+                <div>
+                    <h1 className="fw-bold display-4 mb-2">Khám Phá Hành Trình Của Bạn</h1>
+                    <p className="fs-5 opacity-75">Tìm kiếm tour du lịch, khách sạn và vé phương tiện tốt nhất</p>
                 </div>
             </div>
 
-            <Container className="mb-5">
-                <SearchForm
-                    search={search}
-                    setSearch={setSearch}
-                    handleSearch={handleSearch}
-                />
+            <Container style={{ marginTop: '-50px', position: 'relative', zIndex: 10 }}>
+                <Row className="justify-content-center">
+                    <Col md={10}>
+                        {/* Gọi SearchForm và truyền hàm callback chuẩn props */}
+                        <SearchForm onSearchSuccess={handleSearchData} />
+                    </Col>
+                </Row>
+            </Container>
 
-                <div className="mt-5">
-                    <h2 className="fw-bold mb-4">
-                        {isSearched ? "🔍 Kết quả tìm kiếm phù hợp" : "🔥 Dịch vụ nổi bật"}
-                    </h2>
-
-                    {loading ? (
-                        <MySpinner />
-                    ) : (
+            <Container className="mt-5">
+                <h2 className="fw-bold mb-4">
+                    {isSearched ? " 🔍  Kết quả tìm kiếm phù hợp" : " 🔥  Dịch vụ nổi bật"}
+                </h2>
+                {loading ? (
+                    <MySpinner />
+                ) : (
+                    <>
                         <Row>
-                            {Array.isArray(services) && services.length > 0 ? (
-                                services.map((item) => (
-                                    <Col md={3} sm={6} key={item.id} className="mb-4">
-                                        <ServiceCard
-                                            item={item}
-                                            typeParam={currentTypeParam}
-                                        />
+                            {currentItems.length > 0 ? (
+                                currentItems.map((item, index) => (
+                                    <Col key={item.id || index} sm={6} md={4} lg={3} className="mb-4">
+                                        <ServiceCard item={item} typeParam={currentType} />
                                     </Col>
                                 ))
                             ) : (
-                                <Col xs={12}>
-                                    <p
-                                        className="text-center text-muted py-5 fs-5 bg-light rounded"
-                                        style={{ border: "1px dashed #ccc" }}
-                                    >
-                                        Không tìm thấy dịch vụ nào phù hợp.
-                                    </p>
+                                <Col className="text-center py-5">
+                                    <h5 className="text-muted">Không tìm thấy dịch vụ nào phù hợp với yêu cầu của bạn.</h5>
                                 </Col>
                             )}
                         </Row>
-                    )}
-                </div>
+
+                        {/* THANH ĐIỀU HƯỚNG BẤM CHUYỂN TRANG */}
+                        {totalPages > 1 && (
+                            <div className="d-flex justify-content-center mt-4">
+                                <ul className="pagination">
+                                    <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                        <button className="page-link" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}>
+                                            Trước
+                                        </button>
+                                    </li>
+                                    
+                                    {[...Array(totalPages)].map((_, index) => (
+                                        <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                                            <button className="page-link" onClick={() => setCurrentPage(index + 1)}>
+                                                {index + 1}
+                                            </button>
+                                        </li>
+                                    ))}
+
+                                    <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                        <button className="page-link" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}>
+                                            Sau
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        )}
+                    </>
+                )}
             </Container>
-        </>
+        </div>
     );
 };
 

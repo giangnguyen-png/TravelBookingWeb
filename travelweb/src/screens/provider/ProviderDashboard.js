@@ -1,5 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Form, Modal, Nav, Row, Table } from 'react-bootstrap';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import cookies from 'react-cookies';
 import { MyDispatchContext, MyUserContext } from '../../configs/MyContext';
@@ -86,6 +87,10 @@ const ProviderDashboard = () => {
     const [roomForm, setRoomForm] = useState(emptyRoom);
     const [roomImageFile, setRoomImageFile] = useState(null);
 
+    const [monthlyData, setMonthlyData] = useState([]);
+    const [yearlyData, setYearlyData] = useState([]);
+    const [timeType, setTimeType] = useState('MONTH');
+
     const providerId = providerProfile?.id;
     const businessType = providerProfile?.businessType;
     const isHotel = businessType === 'HOTEL';
@@ -125,16 +130,69 @@ const ProviderDashboard = () => {
     };
 
     const fetchStats = useCallback(async () => {
-        if (!providerId) return;
-        try {
-            const res = await authApis().get('/provider/statistics', {
-                params: { providerId, fromDate, toDate }
-            });
-            setStats(res.data);
-        } catch (err) {
-            console.error('Lỗi lấy thống kê:', err);
+    if (!providerId) return;
+    try {
+        const res = await authApis().get('/provider/statistics', {
+            params: { providerId, fromDate, toDate }
+        });
+        setStats(res.data); // Hứng { revenue, bookings } từ BE
+    } catch (err) {
+        console.error('Lỗi lấy thống kê tổng quan:', err);
+    }
+}, [providerId, fromDate, toDate]);
+
+    const fetchAdvancedStatsFromBE = useCallback(async () => {
+    if (!providerId) return;
+    try {
+        // Gọi chuẩn API đơn hàng mà BE đã viết sẵn cho Provider
+        const res = await authApis().get('/provider/bookings', {
+            params: { providerId }
+        });
+        const bookingsFromBE = Array.isArray(res.data) ? res.data : [];
+
+        // Lọc các đơn hàng hợp lệ (đã thanh toán hoặc hoàn thành) dựa theo ENUM status của bạn
+        const validBookings = bookingsFromBE.filter(b => b.status === 'PAID' || b.status === 'COMPLETED');
+
+        const currentYear = new Date().getFullYear();
+        
+        // Cấu trúc mảng 12 tháng chuẩn để nạp vào biểu đồ cột
+        const monthlyMap = {};
+        for (let m = 1; m <= 12; m++) {
+            monthlyMap[m] = { month: m, revenue: 0, count: 0 };
         }
-    }, [providerId, fromDate, toDate]);
+        
+        const yearlyMap = {};
+
+    validBookings.forEach(booking => {
+            const dateObj = new Date(booking.createdAt || booking.created_at);
+            if (Number.isNaN(dateObj.getTime())) return;
+
+            const year = dateObj.getFullYear();
+            const month = dateObj.getMonth() + 1;
+            const price = Number(booking.totalPrice || booking.total_price || 0);
+
+            // Gom nhóm vào tháng tương ứng nếu thuộc năm hiện tại
+            if (year === currentYear) {
+                monthlyMap[month].revenue += price;
+                monthlyMap[month].count += 1;
+            }
+
+            // Gom nhóm vào năm tương ứng trong lịch sử
+            if (!yearlyMap[year]) {
+                yearlyMap[year] = { year: year, revenue: 0, count: 0 };
+            }
+            yearlyMap[year].revenue += price;
+            yearlyMap[year].count += 1;
+        });
+
+        // Đẩy dữ liệu đã gom nhóm từ API của BE vào State biểu đồ
+        setMonthlyData(Object.values(monthlyMap));
+        setYearlyData(Object.values(yearlyMap).sort((a, b) => a.year - b.year));
+
+    } catch (err) {
+        console.error('Lỗi lấy mảng đơn hàng vẽ biểu đồ:', err);
+    }
+}, [providerId]);
 
     const fetchServices = useCallback(async () => {
         if (!providerId) return;
@@ -154,11 +212,12 @@ const ProviderDashboard = () => {
     }, [user]);
 
     useEffect(() => {
-        if (providerId) {
-            fetchStats();
-            fetchServices();
-        }
-    }, [providerId, fetchStats, fetchServices]);
+    if (providerId) {
+        fetchStats();                  // Chạy API số tổng của bạn
+        fetchServices();               // Chạy API danh sách dịch vụ của bạn
+        fetchAdvancedStatsFromBE();    // Chạy API lấy mảng đơn hàng để vẽ biểu đồ
+    }
+}, [providerId, fetchStats, fetchServices, fetchAdvancedStatsFromBE]);
 
     const logout = () => {
         if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
@@ -533,19 +592,68 @@ const ProviderDashboard = () => {
                 {activeTab === 'bookings' && <div><h4 className="fw-bold mb-3">Danh sách đơn đặt hàng</h4><Card className="border-0 shadow-sm p-4 text-center text-muted">Tính năng quản lý đơn hàng đang được đồng bộ...</Card></div>}
 
                 {activeTab === 'stats' && (
-                    <div>
-                        <h4 className="fw-bold mb-3">Lọc thống kê</h4>
-                        <Card className="p-3 border-0 shadow-sm mb-3">
-                            <Form onSubmit={(e) => { e.preventDefault(); fetchStats(); }}>
-                                <Row className="align-items-end">
-                                    <Col md={4} className="mb-2"><Form.Label className="small text-muted">Từ ngày</Form.Label><Form.Control type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></Col>
-                                    <Col md={4} className="mb-2"><Form.Label className="small text-muted">Đến ngày</Form.Label><Form.Control type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></Col>
-                                    <Col md={4} className="mb-2"><Button type="submit" variant="primary" className="w-100">Lọc kết quả</Button></Col>
-                                </Row>
-                            </Form>
-                        </Card>
-                    </div>
-                )}
+    <div>
+        <h3 className="mb-4 fw-bold text-dark">Báo cáo & Thống kê doanh thu</h3>
+        
+        {/* Hàng hiển thị số tổng quan bốc trực tiếp từ cục stats của API BE */}
+        <Row className="mb-4">
+            <Col md={6} className="mb-3">
+                <Card className="p-3 shadow-sm border-0 bg-white">
+                    <Card.Body>
+                        <h6 className="text-muted text-uppercase fw-semibold small">Tổng số lượt đặt dịch vụ</h6>
+                        <h3 className="text-info fw-bold mt-2">
+                            {stats.bookings || 0} <span className="fs-6 fw-normal text-muted">lượt</span>
+                        </h3>
+                    </Card.Body>
+                </Card>
+            </Col>
+            <Col md={6} className="mb-3">
+                <Card className="p-3 shadow-sm border-0 bg-white">
+                    <Card.Body>
+                        <h6 className="text-muted text-uppercase fw-semibold small">Tổng doanh thu</h6>
+                        <h3 className="text-primary fw-bold mt-2">
+                            {(stats.revenue || 0).toLocaleString()} <span className="fs-6 fw-normal text-muted">VNĐ</span>
+                        </h3>
+                    </Card.Body>
+                </Card>
+            </Col>
+        </Row>
+
+        {/* Khối biểu đồ cột thông minh kết nối mảng dữ liệu đơn hàng từ BE */}
+        <Card className="shadow-sm border-0 bg-white p-4 mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h5 className="fw-bold m-0 text-secondary">
+                    {timeType === 'MONTH' ? 'Biểu đồ doanh thu theo các tháng' : 'Biểu đồ doanh thu qua các năm'}
+                </h5>
+                <Form.Select 
+                    style={{ width: '220px' }} 
+                    value={timeType} 
+                    onChange={(e) => setTimeType(e.target.value)}
+                    className="form-select-sm shadow-none"
+                >
+                    <option value="MONTH">Thống kê theo Tháng</option>
+                    <option value="YEAR">Thống kê theo Năm</option>
+                </Form.Select>
+            </div>
+
+            <div style={{ width: '100%', height: 320 }}>
+                <ResponsiveContainer>
+                    <BarChart
+                        data={timeType === 'MONTH' ? monthlyData : yearlyData}
+                        margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey={timeType === 'MONTH' ? "month" : "year"} tickFormatter={(v) => timeType === 'MONTH' ? `Tháng ${v}` : `Năm ${v}`} />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [Number(value).toLocaleString() + " VNĐ", "Doanh thu"]} />
+                        <Legend />
+                        <Bar dataKey="revenue" name="Doanh thu" fill="#0d6efd" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        </Card>
+    </div>
+)}
             </Col>
 
             <Modal show={showServiceModal} onHide={() => { setShowServiceModal(false); resetServiceModal(); }} centered size="lg">

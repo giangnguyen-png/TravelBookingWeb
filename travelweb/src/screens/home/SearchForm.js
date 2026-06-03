@@ -1,11 +1,54 @@
+import { useState } from "react";
 import { Card, Row, Col, Form, Button } from "react-bootstrap";
+import Apis, { endpoints } from "../../configs/Apis";
 
-const SearchForm = ({ search, setSearch, handleSearch }) => {
+const SearchForm = ({ onSearchSuccess }) => {
+    const [search, setSearch] = useState({
+        location: "",
+        type: "",
+        departureTime: "",
+        price: ""
+    });
+    const [loading, setLoading] = useState(false);
+
     const change = (e, field) => {
         setSearch({
             ...search,
             [field]: e.target.value
         });
+    };
+
+    const handleSearchClick = async () => {
+        if (!search.type) {
+            alert("Vui lòng chọn Loại hình dịch vụ cần tìm kiếm!");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            
+            // Khớp nối chuẩn xác 100% các Key từ file Apis.js bạn vừa gửi
+            let endpoint = endpoints['tours'];
+            if (search.type === "Khách sạn") endpoint = endpoints['hotels'];
+            else if (search.type === "Vé máy bay") endpoint = endpoints['flights'];
+            else if (search.type === "Xe khách") endpoint = endpoints['busTrips']; // Đã sửa từ 'bus-trips' thành 'busTrips'
+
+            const queryParams = new URLSearchParams();
+            if (search.location) queryParams.append("location", search.location);
+            if (search.price) queryParams.append("price", search.price);
+            if (search.departureTime) queryParams.append("departureTime", search.departureTime);
+
+            const res = await Apis.get(`${endpoint}?${queryParams.toString()}`);
+            
+            if (onSearchSuccess) {
+                onSearchSuccess(res.data, search.type);
+            }
+        } catch (err) {
+            console.error("Lỗi tìm kiếm:", err);
+            alert("Không tìm thấy kết quả phù hợp!");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -80,9 +123,10 @@ const SearchForm = ({ search, setSearch, handleSearch }) => {
                         variant="primary"
                         size="lg"
                         className="px-5 fw-bold"
-                        onClick={handleSearch}
+                        onClick={handleSearchClick}
+                        disabled={loading}
                     >
-                        🔍 Tìm kiếm ngay
+                        {loading ? "Đang tìm..." : "🔍 Tìm kiếm ngay"}
                     </Button>
                 </div>
             </Card.Body>
