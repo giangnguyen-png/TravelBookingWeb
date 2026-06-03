@@ -1,31 +1,167 @@
-// src/screens/provider/ProviderDashboard.js
-import React, { useState, useEffect, useContext } from 'react';
-import { Row, Col, Card, Nav, Table, Button, Modal, Form } from 'react-bootstrap';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { Alert, Button, Card, Col, Form, Modal, Nav, Row, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import cookies from 'react-cookies';
-import { MyUserContext, MyDispatchContext } from '../../configs/MyContext';
-import Apis, { authApis } from "../../configs/Apis";
+import { MyDispatchContext, MyUserContext } from '../../configs/MyContext';
+import Apis, { authApis } from '../../configs/Apis';
+
+const labels = {
+    HOTEL: 'Khách sạn',
+    TOUR_COMPANY: 'Công ty tour',
+    AIRLINE: 'Hãng bay',
+    BUS_COMPANY: 'Nhà xe'
+};
+
+const emptyService = {
+    hotelName: '',
+    description: '',
+    address: '',
+    locationId: '',
+    title: '',
+    departureDate: '',
+    durationDays: '',
+    price: '',
+    availableSlots: '',
+    flightCode: '',
+    departureTime: '',
+    arrivalTime: '',
+    availableSeats: '',
+    departureLocationId: '',
+    destinationLocationId: '',
+    arrivalLocationId: ''
+};
+
+const emptyRoom = {
+    hotelId: '',
+    roomName: '',
+    roomType: 'STANDARD',
+    pricePerNight: '',
+    availableRooms: '',
+    description: ''
+};
+
+const toDateTimeInput = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toISOString().slice(0, 16);
+};
+
+const appendFormData = (payload, fileField, file) => {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) formData.append(key, value);
+    });
+    if (file) formData.append(fileField, file);
+    return formData;
+};
+
+const serviceName = (service, businessType) => {
+    if (businessType === 'HOTEL') return service.hotelName;
+    if (businessType === 'TOUR_COMPANY') return service.title;
+    if (businessType === 'AIRLINE') return service.flightCode;
+    return `Chuyến xe #${service.id}`;
+};
 
 const ProviderDashboard = () => {
     const user = useContext(MyUserContext);
     const dispatch = useContext(MyDispatchContext);
     const navigate = useNavigate();
-    
+
     const [activeTab, setActiveTab] = useState('overview');
-    
-    // State cho Thống kê
+    const [providerProfile, setProviderProfile] = useState(null);
+    const [locations, setLocations] = useState([]);
     const [stats, setStats] = useState({ revenue: 0, bookings: 0 });
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
-
-    // State cho Quản lý dịch vụ
     const [services, setServices] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [newService, setNewService] = useState({ name: '', type: 'HOTEL', price: '' });
+    const [error, setError] = useState('');
 
-    // Hàm đăng xuất gọn gàng giống bên Admin của BE
-    const handleLogout = () => {
-        if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+    const [showServiceModal, setShowServiceModal] = useState(false);
+    const [editingService, setEditingService] = useState(null);
+    const [serviceForm, setServiceForm] = useState(emptyService);
+    const [thumbnailFile, setThumbnailFile] = useState(null);
+
+    const [showRoomModal, setShowRoomModal] = useState(false);
+    const [roomForm, setRoomForm] = useState(emptyRoom);
+    const [roomImageFile, setRoomImageFile] = useState(null);
+
+    const providerId = providerProfile?.id;
+    const businessType = providerProfile?.businessType;
+    const isHotel = businessType === 'HOTEL';
+
+    const updateService = (field, value) => setServiceForm((current) => ({ ...current, [field]: value }));
+    const updateRoom = (field, value) => setRoomForm((current) => ({ ...current, [field]: value }));
+
+    const resetServiceModal = () => {
+        setEditingService(null);
+        setServiceForm(emptyService);
+        setThumbnailFile(null);
+        setError('');
+    };
+
+    const resetRoomModal = () => {
+        setRoomForm(emptyRoom);
+        setRoomImageFile(null);
+        setError('');
+    };
+
+    const fetchProviderProfile = async () => {
+        try {
+            const res = await authApis().get('/provider/profile');
+            setProviderProfile(res.data);
+        } catch (err) {
+            setError('Không tìm thấy hồ sơ nhà cung cấp.');
+        }
+    };
+
+    const fetchLocations = async () => {
+        try {
+            const res = await Apis.get('/locations');
+            setLocations(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            console.error('Lỗi lấy địa điểm:', err);
+        }
+    };
+
+    const fetchStats = useCallback(async () => {
+        if (!providerId) return;
+        try {
+            const res = await authApis().get('/provider/statistics', {
+                params: { providerId, fromDate, toDate }
+            });
+            setStats(res.data);
+        } catch (err) {
+            console.error('Lỗi lấy thống kê:', err);
+        }
+    }, [providerId, fromDate, toDate]);
+
+    const fetchServices = useCallback(async () => {
+        if (!providerId) return;
+        try {
+            const res = await authApis().get('/provider/services', { params: { providerId } });
+            setServices(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            console.error('Lỗi lấy dịch vụ:', err);
+        }
+    }, [providerId]);
+
+    useEffect(() => {
+        if (user) {
+            fetchProviderProfile();
+            fetchLocations();
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (providerId) {
+            fetchStats();
+            fetchServices();
+        }
+    }, [providerId, fetchStats, fetchServices]);
+
+    const logout = () => {
+        if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
             cookies.remove('token', { path: '/' });
             cookies.remove('user', { path: '/' });
             dispatch({ type: 'logout' });
@@ -33,149 +169,283 @@ const ProviderDashboard = () => {
         }
     };
 
-    // Gọi API thống kê và dịch vụ
-    const fetchStats = async () => {
-        if (!user) return;
-        try {
-            const res = await authApis().get('/provider/statistics', {
-                params: { providerId: user.id, fromDate, toDate }
-            });
-            setStats(res.data);
-        } catch (err) {
-            console.error("Lỗi lấy thống kê:", err);
-        }
+    const openAddService = () => {
+        resetServiceModal();
+        setShowServiceModal(true);
     };
 
-    const fetchServices = async () => {
-        if (!user) return;
-        try {
-            const res = await authApis().get('/provider/services', {
-                params: { providerId: user.id }
-            });
-            setServices(res.data);
-        } catch (err) {
-            console.error("Lỗi lấy dịch vụ:", err);
-        }
+    const openEditService = (service) => {
+        setEditingService(service);
+        setThumbnailFile(null);
+        setServiceForm({
+            ...emptyService,
+            hotelName: service.hotelName || '',
+            description: service.description || '',
+            address: service.address || '',
+            title: service.title || '',
+            departureDate: toDateTimeInput(service.departureDate),
+            durationDays: service.durationDays || '',
+            price: service.price || '',
+            availableSlots: service.availableSlots || '',
+            flightCode: service.flightCode || '',
+            departureTime: toDateTimeInput(service.departureTime),
+            arrivalTime: toDateTimeInput(service.arrivalTime),
+            availableSeats: service.availableSeats || ''
+        });
+        setShowServiceModal(true);
     };
 
-    useEffect(() => {
-        if (user) {
-            fetchStats();
+    const openRoomModal = (hotel) => {
+        resetRoomModal();
+        setRoomForm({ ...emptyRoom, hotelId: String(hotel.id) });
+        setShowRoomModal(true);
+    };
+
+    const buildPayload = () => {
+        const base = { providerId: String(providerId) };
+        if (businessType === 'HOTEL') {
+            return {
+                ...base,
+                hotelName: serviceForm.hotelName,
+                description: serviceForm.description,
+                address: serviceForm.address,
+                locationId: serviceForm.locationId || editingService?.locationId?.id || ''
+            };
+        }
+        if (businessType === 'TOUR_COMPANY') {
+            return {
+                ...base,
+                title: serviceForm.title,
+                description: serviceForm.description,
+                departureDate: serviceForm.departureDate,
+                durationDays: serviceForm.durationDays,
+                price: serviceForm.price,
+                availableSlots: serviceForm.availableSlots,
+                departureLocationId: serviceForm.departureLocationId,
+                destinationLocationId: serviceForm.destinationLocationId
+            };
+        }
+        if (businessType === 'AIRLINE') {
+            return {
+                ...base,
+                flightCode: serviceForm.flightCode,
+                departureTime: serviceForm.departureTime,
+                arrivalTime: serviceForm.arrivalTime,
+                price: serviceForm.price,
+                availableSeats: serviceForm.availableSeats,
+                departureLocationId: serviceForm.departureLocationId,
+                arrivalLocationId: serviceForm.arrivalLocationId
+            };
+        }
+        return {
+            ...base,
+            departureTime: serviceForm.departureTime,
+            arrivalTime: serviceForm.arrivalTime,
+            price: serviceForm.price,
+            availableSeats: serviceForm.availableSeats,
+            departureLocationId: serviceForm.departureLocationId,
+            arrivalLocationId: serviceForm.arrivalLocationId
+        };
+    };
+
+    const saveService = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            const data = appendFormData(buildPayload(), 'thumbnailFile', thumbnailFile);
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+            const res = editingService
+                ? await authApis().put(`/provider/services/${editingService.id}`, data, config)
+                : await authApis().post('/provider/services', data, config);
+
+            if (!editingService && isHotel) {
+                await createRoom(res.data.id);
+            }
+
+            setShowServiceModal(false);
+            resetServiceModal();
             fetchServices();
+            alert(editingService ? 'Cập nhật dịch vụ thành công!' : 'Thêm dịch vụ thành công!');
+        } catch (err) {
+            setError(err.response?.data || 'Không thể lưu dịch vụ.');
         }
-    }, [user]);
+    };
 
-    const handleAddService = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    try {
-        // Đảm bảo trường giá tiền luôn là chuỗi số hợp lệ, không được để trống ô nhập
-        const safePrice = newService.price && String(newService.price).trim() !== "" ? String(newService.price) : "0";
-
-        // Gom toàn bộ trường mà các hàm build bên BE cũ bắt buộc phải bóc từ Map ra
+    const createRoom = async (hotelId = roomForm.hotelId) => {
         const payload = {
-            // 3 trường chính từ Form của bạn
-            name: newService.name || "",
-            type: newService.type || "HOTEL",
-            price: safePrice,
-            providerId: String(user.id),
-
-            // --- CỨU LỖI 500: Nhồi các trường ẩn để hàm buildHotel/buildTour ở BE không bị null ---
-            // Dành cho thực thể HOTEL (hàm buildHotel)
-            hotelName: newService.name || "", 
-            description: "Mô tả dịch vụ mặc định",
-            address: "Địa chỉ mặc định",
-            thumbnail: "",
-            locationId: "1", // BẮT BUỘC: để BE gọi Long.valueOf("1") thành công
-
-            // Dành cho thực thể TOUR (hàm buildTour)
-            title: newService.name || "",
-            departureDate: new Date().toISOString().slice(0, 16), // Định dạng YYYY-MM-DDTHH:mm
-            durationDays: "1",      // BẮT BUỘC: để BE gọi Integer.parseInt("1")
-            availableSlots: "10",   // BẮT BUỘC: để BE gọi Integer.parseInt("10")
-            departureLocationId: "1",
-            destinationLocationId: "1",
-
-            // Dành cho thực thể FLIGHT & BUS (hàm buildFlight / buildBusTrip)
-            flightCode: "FLIGHT-001",
-            departureTime: new Date().toISOString().slice(0, 16),
-            arrivalTime: new Date().toISOString().slice(0, 16),
-            arrivalLocationId: "1",
-            availableSeats: "30"    // BẮT BUỘC: để BE gọi Integer.parseInt("30")
+            hotelId: String(hotelId),
+            roomName: roomForm.roomName,
+            roomType: roomForm.roomType,
+            pricePerNight: roomForm.pricePerNight,
+            availableRooms: roomForm.availableRooms,
+            description: roomForm.description,
+            image: ''
         };
-
-        // Gửi bằng JSON thuần túy (đúng với @RequestBody gốc của BE)
-        await authApis().post('/provider/services', payload, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
+        await authApis().post('/provider/rooms', appendFormData(payload, 'imageFile', roomImageFile), {
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
-        
-        setShowModal(false);
-        setNewService({ name: '', type: 'HOTEL', price: '' });
-        fetchServices();
-        alert("Thêm dịch vụ thành công!");
-    } catch (err) {
-        console.log("Chi tiết lỗi:", err.response?.data);
-        alert("Lỗi khi thêm dịch vụ!");
-    }
-};
+    };
 
-    const handleUpdateService = async (id, updatedData) => {
-    try {
-        const safePrice = updatedData.price && String(updatedData.price).trim() !== "" ? String(updatedData.price) : "0";
-
-        const payload = {
-            name: updatedData.name || "",
-            type: updatedData.type || "HOTEL",
-            price: safePrice,
-            providerId: String(user.id),
-
-            // Nhồi đầy đủ các trường tương tự như hàm thêm để tránh lỗi bên BE cũ
-            hotelName: updatedData.name || "", 
-            description: "Mô tả cập nhật",
-            address: "Địa chỉ cập nhật",
-            thumbnail: "",
-            locationId: "1", 
-
-            title: updatedData.name || "",
-            departureDate: new Date().toISOString().slice(0, 16),
-            durationDays: "1",
-            availableSlots: "10",
-            departureLocationId: "1",
-            destinationLocationId: "1",
-
-            flightCode: "FLIGHT-001",
-            departureTime: new Date().toISOString().slice(0, 16),
-            arrivalTime: new Date().toISOString().slice(0, 16),
-            arrivalLocationId: "1",
-            availableSeats: "30"
-        };
-
-        // Gọi API PUT bằng JSON thuần đúng theo Controller gốc
-        await authApis().put(`/provider/services/${id}`, payload, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        alert("Cập nhật dịch vụ thành công!");
-        fetchServices();
-    } catch (err) {
-        console.log("Lỗi khi sửa:", err.response?.data);
-        alert("Lỗi khi cập nhật dịch vụ!");
-    }
-};
-
-    const handleDeleteService = async (id) => {
-        if (window.confirm("Bạn có chắc chắn muốn xóa?")) {
-            try {
-                await authApis().delete(`/provider/services/${id}`, { params: { providerId: user.id } });
-                fetchServices();
-                alert("Xóa thành công!");
-            } catch (err) {
-                alert("Lỗi khi xóa!");
-            }
+    const saveRoom = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            await createRoom();
+            setShowRoomModal(false);
+            resetRoomModal();
+            alert('Thêm phòng thành công!');
+        } catch (err) {
+            setError(err.response?.data || 'Không thể thêm phòng.');
         }
+    };
+
+    const deleteService = async (id) => {
+        if (!window.confirm('Bạn có chắc chắn muốn xóa dịch vụ này?')) return;
+        try {
+            await authApis().delete(`/provider/services/${id}`, { params: { providerId } });
+            fetchServices();
+            alert('Xóa thành công!');
+        } catch (err) {
+            alert(err.response?.data || 'Không thể xóa dịch vụ.');
+        }
+    };
+
+    const locationOptions = (
+        <>
+            <option value="">Chọn địa điểm</option>
+            {locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                    {[location.province, location.country].filter(Boolean).join(', ')}
+                </option>
+            ))}
+        </>
+    );
+
+    const imageInput = (required) => (
+        <Form.Group className="mb-3">
+            <Form.Label>Ảnh đại diện</Form.Label>
+            <Form.Control required={required} type="file" accept="image/*" onChange={(e) => setThumbnailFile(e.target.files[0] || null)} />
+        </Form.Group>
+    );
+
+    const roomFields = (
+        <Card className="border-0 bg-light mt-4">
+            <Card.Body>
+                <h5 className="fw-bold mb-3">Thông tin phòng khách sạn</h5>
+                <Form.Group className="mb-3">
+                    <Form.Label>Tên phòng</Form.Label>
+                    <Form.Control required value={roomForm.roomName} onChange={(e) => updateRoom('roomName', e.target.value)} />
+                </Form.Group>
+                <Row>
+                    <Col md={6}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Loại phòng</Form.Label>
+                            <Form.Select required value={roomForm.roomType} onChange={(e) => updateRoom('roomType', e.target.value)}>
+                                <option value="STANDARD">STANDARD</option>
+                                <option value="DELUXE">DELUXE</option>
+                                <option value="VIP">VIP</option>
+                            </Form.Select>
+                        </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Giá mỗi đêm</Form.Label>
+                            <Form.Control required min="1" type="number" value={roomForm.pricePerNight} onChange={(e) => updateRoom('pricePerNight', e.target.value)} />
+                        </Form.Group>
+                    </Col>
+                </Row>
+                <Form.Group className="mb-3">
+                    <Form.Label>Số phòng còn trống</Form.Label>
+                    <Form.Control required min="0" type="number" value={roomForm.availableRooms} onChange={(e) => updateRoom('availableRooms', e.target.value)} />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                    <Form.Label>Mô tả phòng</Form.Label>
+                    <Form.Control required as="textarea" rows={3} value={roomForm.description} onChange={(e) => updateRoom('description', e.target.value)} />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                    <Form.Label>Ảnh phòng</Form.Label>
+                    <Form.Control required type="file" accept="image/*" onChange={(e) => setRoomImageFile(e.target.files[0] || null)} />
+                </Form.Group>
+            </Card.Body>
+        </Card>
+    );
+
+    const serviceFields = () => {
+        if (businessType === 'HOTEL') {
+            return (
+                <>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Tên khách sạn</Form.Label>
+                        <Form.Control required value={serviceForm.hotelName} onChange={(e) => updateService('hotelName', e.target.value)} />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Mô tả khách sạn</Form.Label>
+                        <Form.Control required as="textarea" rows={3} value={serviceForm.description} onChange={(e) => updateService('description', e.target.value)} />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Địa chỉ</Form.Label>
+                        <Form.Control required value={serviceForm.address} onChange={(e) => updateService('address', e.target.value)} />
+                    </Form.Group>
+                    {imageInput(!editingService)}
+                    <Form.Group className="mb-3">
+                        <Form.Label>Địa điểm</Form.Label>
+                        <Form.Select required value={serviceForm.locationId} onChange={(e) => updateService('locationId', e.target.value)}>
+                            {locationOptions}
+                        </Form.Select>
+                    </Form.Group>
+                    {!editingService && roomFields}
+                </>
+            );
+        }
+        if (businessType === 'TOUR_COMPANY') {
+            return (
+                <>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Tên tour</Form.Label>
+                        <Form.Control required value={serviceForm.title} onChange={(e) => updateService('title', e.target.value)} />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Mô tả</Form.Label>
+                        <Form.Control required as="textarea" rows={3} value={serviceForm.description} onChange={(e) => updateService('description', e.target.value)} />
+                    </Form.Group>
+                    <Row>
+                        <Col md={6}><Form.Group className="mb-3"><Form.Label>Ngày khởi hành</Form.Label><Form.Control required type="datetime-local" value={serviceForm.departureDate} onChange={(e) => updateService('departureDate', e.target.value)} /></Form.Group></Col>
+                        <Col md={6}><Form.Group className="mb-3"><Form.Label>Số ngày</Form.Label><Form.Control required min="1" type="number" value={serviceForm.durationDays} onChange={(e) => updateService('durationDays', e.target.value)} /></Form.Group></Col>
+                    </Row>
+                    <Row>
+                        <Col md={6}><Form.Group className="mb-3"><Form.Label>Giá tour</Form.Label><Form.Control required min="1" type="number" value={serviceForm.price} onChange={(e) => updateService('price', e.target.value)} /></Form.Group></Col>
+                        <Col md={6}><Form.Group className="mb-3"><Form.Label>Số chỗ còn trống</Form.Label><Form.Control required min="0" type="number" value={serviceForm.availableSlots} onChange={(e) => updateService('availableSlots', e.target.value)} /></Form.Group></Col>
+                    </Row>
+                    {imageInput(!editingService)}
+                    <Row>
+                        <Col md={6}><Form.Group className="mb-3"><Form.Label>Điểm khởi hành</Form.Label><Form.Select required value={serviceForm.departureLocationId} onChange={(e) => updateService('departureLocationId', e.target.value)}>{locationOptions}</Form.Select></Form.Group></Col>
+                        <Col md={6}><Form.Group className="mb-3"><Form.Label>Điểm đến</Form.Label><Form.Select required value={serviceForm.destinationLocationId} onChange={(e) => updateService('destinationLocationId', e.target.value)}>{locationOptions}</Form.Select></Form.Group></Col>
+                    </Row>
+                </>
+            );
+        }
+        return (
+            <>
+                {businessType === 'AIRLINE' && (
+                    <>
+                        <Form.Group className="mb-3"><Form.Label>Mã chuyến bay</Form.Label><Form.Control required value={serviceForm.flightCode} onChange={(e) => updateService('flightCode', e.target.value)} /></Form.Group>
+                        {imageInput(!editingService)}
+                    </>
+                )}
+                <Row>
+                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Thời gian khởi hành</Form.Label><Form.Control required type="datetime-local" value={serviceForm.departureTime} onChange={(e) => updateService('departureTime', e.target.value)} /></Form.Group></Col>
+                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Thời gian đến</Form.Label><Form.Control required type="datetime-local" value={serviceForm.arrivalTime} onChange={(e) => updateService('arrivalTime', e.target.value)} /></Form.Group></Col>
+                </Row>
+                <Row>
+                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Giá vé</Form.Label><Form.Control required min="1" type="number" value={serviceForm.price} onChange={(e) => updateService('price', e.target.value)} /></Form.Group></Col>
+                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Số ghế còn trống</Form.Label><Form.Control required min="0" type="number" value={serviceForm.availableSeats} onChange={(e) => updateService('availableSeats', e.target.value)} /></Form.Group></Col>
+                </Row>
+                <Row>
+                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Điểm khởi hành</Form.Label><Form.Select required value={serviceForm.departureLocationId} onChange={(e) => updateService('departureLocationId', e.target.value)}>{locationOptions}</Form.Select></Form.Group></Col>
+                    <Col md={6}><Form.Group className="mb-3"><Form.Label>Điểm đến</Form.Label><Form.Select required value={serviceForm.arrivalLocationId} onChange={(e) => updateService('arrivalLocationId', e.target.value)}>{locationOptions}</Form.Select></Form.Group></Col>
+                </Row>
+            </>
+        );
     };
 
     if (!user || user.role !== 'PROVIDER') {
@@ -183,7 +453,7 @@ const ProviderDashboard = () => {
             <div className="container mt-5 text-center">
                 <Card className="p-4 border-danger">
                     <h4 className="text-danger">Không có quyền truy cập!</h4>
-                    <p className="text-muted">Vui lòng đăng nhập tài khoản Nhà cung cấp.</p>
+                    <p className="text-muted">Vui lòng đăng nhập tài khoản nhà cung cấp.</p>
                 </Card>
             </div>
         );
@@ -191,62 +461,41 @@ const ProviderDashboard = () => {
 
     return (
         <Row className="w-100 m-0" style={{ minHeight: '100vh' }}>
-            {/* SIDEBAR GỐC - THÊM NÚT ĐĂNG XUẤT Ở DƯỚI CÙNG */}
             <Col md={3} className="bg-dark text-white p-4 d-flex flex-column justify-content-between">
                 <div>
-                    <h1 className="text-center mb-8">Travel Provider</h1>
+                    <h1 className="text-center mb-4">Travel Provider</h1>
                     <hr className="bg-secondary" />
-                    
                     <Nav className="flex-column">
-                        <Nav.Link onClick={() => setActiveTab('overview')} className={`text-white mb-3 custom-link ${activeTab === 'overview' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Tổng quan</Nav.Link>
-                        <Nav.Link onClick={() => setActiveTab('services')} className={`text-white mb-3 custom-link ${activeTab === 'services' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Quản lý dịch vụ</Nav.Link>
-                        <Nav.Link onClick={() => setActiveTab('bookings')} className={`text-white mb-3 custom-link ${activeTab === 'bookings' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Đơn đặt hàng</Nav.Link>
-                        <Nav.Link onClick={() => setActiveTab('stats')} className={`text-white mb-3 custom-link ${activeTab === 'stats' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Thống kê</Nav.Link>
+                        <Nav.Link onClick={() => setActiveTab('overview')} className={`text-white mb-3 ${activeTab === 'overview' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Tổng quan</Nav.Link>
+                        <Nav.Link onClick={() => setActiveTab('services')} className={`text-white mb-3 ${activeTab === 'services' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Quản lý dịch vụ</Nav.Link>
+                        <Nav.Link onClick={() => setActiveTab('bookings')} className={`text-white mb-3 ${activeTab === 'bookings' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Đơn đặt hàng</Nav.Link>
+                        <Nav.Link onClick={() => setActiveTab('stats')} className={`text-white mb-3 ${activeTab === 'stats' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Thống kê</Nav.Link>
                     </Nav>
                 </div>
-
-                {/* KHU VỰC NÚT ĐĂNG XUẤT */}
-                <div>
-                    <hr className="bg-secondary" />
-                    <Button variant="danger" className="w-100 fw-bold" onClick={handleLogout}>
-                        Đăng xuất
-                    </Button>
-                </div>
+                <div><hr className="bg-secondary" /><Button variant="danger" className="w-100 fw-bold" onClick={logout}>Đăng xuất</Button></div>
             </Col>
 
-            {/* MAIN CONTENT BÊN PHẢI */}
             <Col md={9} className="p-4 bg-light">
-                {/* TAB 1: TỔNG QUAN */}
+                {error && <Alert variant="danger">{error}</Alert>}
                 {activeTab === 'overview' && (
                     <div>
-                        <h3 className="mb-4 fw-bold">Tổng quan hệ thống</h3>
+                        <h3 className="mb-2 fw-bold">Tổng quan hệ thống</h3>
+                        <p className="text-muted mb-4">Loại hình: <strong>{labels[businessType] || 'Đang tải...'}</strong></p>
                         <Row>
-                            <Col md={6} className="mb-3">
-                                <Card className="p-3 shadow-sm border-0 bg-white">
-                                    <Card.Body>
-                                        <h6 className="text-muted">TỔNG DOANH THU</h6>
-                                        <h3 className="text-primary fw-bold">{stats.revenue?.toLocaleString() || 0} VNĐ</h3>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                            <Col md={6} className="mb-3">
-                                <Card className="p-3 shadow-sm border-0 bg-white">
-                                    <Card.Body>
-                                        <h6 className="text-muted">TỔNG LƯỢNG ĐẶT DỊCH VỤ</h6>
-                                        <h3 className="text-success fw-bold">{stats.bookings || 0} đơn</h3>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
+                            <Col md={6} className="mb-3"><Card className="p-3 shadow-sm border-0 bg-white"><Card.Body><h6 className="text-muted">TỔNG DOANH THU</h6><h3 className="text-primary fw-bold">{stats.revenue?.toLocaleString() || 0} VNĐ</h3></Card.Body></Card></Col>
+                            <Col md={6} className="mb-3"><Card className="p-3 shadow-sm border-0 bg-white"><Card.Body><h6 className="text-muted">TỔNG ĐƠN ĐẶT DỊCH VỤ</h6><h3 className="text-success fw-bold">{stats.bookings || 0} đơn</h3></Card.Body></Card></Col>
                         </Row>
                     </div>
                 )}
 
-                {/* TAB 2: QUẢN LÝ DỊCH VỤ */}
                 {activeTab === 'services' && (
                     <div>
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h4 className="fw-bold">Danh sách dịch vụ</h4>
-                            <Button variant="success" onClick={() => setShowModal(true)}>+ Thêm dịch vụ</Button>
+                            <div>
+                                <h4 className="fw-bold mb-1">Danh sách dịch vụ</h4>
+                                <span className="text-muted">Loại hình: {labels[businessType] || 'Đang tải...'}</span>
+                            </div>
+                            <Button variant="success" disabled={!businessType} onClick={openAddService}>+ Thêm dịch vụ</Button>
                         </div>
                         <Card className="border-0 shadow-sm">
                             <Table responsive hover className="m-0 align-middle">
@@ -255,23 +504,25 @@ const ProviderDashboard = () => {
                                         <th>ID</th>
                                         <th>Tên dịch vụ</th>
                                         <th>Loại hình</th>
-                                        <th>Giá</th>
+                                        {!isHotel && <th>Giá</th>}
                                         <th className="text-center">Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {services.length > 0 ? services.map(s => (
-                                        <tr key={s.id}>
-                                            <td>#{s.id}</td>
-                                            <td className="fw-bold">{s.name}</td>
-                                            <td><span className="badge bg-info text-dark">{s.type}</span></td>
-                                            <td className="text-primary fw-bold">{Number(s.price)?.toLocaleString()} VNĐ</td>
+                                    {services.length > 0 ? services.map((service) => (
+                                        <tr key={service.id}>
+                                            <td>#{service.id}</td>
+                                            <td className="fw-bold">{serviceName(service, businessType)}</td>
+                                            <td><span className="badge bg-info text-dark">{labels[businessType]}</span></td>
+                                            {!isHotel && <td className="text-primary fw-bold">{Number(service.price || 0).toLocaleString()} VNĐ</td>}
                                             <td className="text-center">
-                                                <Button variant="danger" size="sm" onClick={() => handleDeleteService(s.id)}>Xóa</Button>
+                                                {isHotel && <Button variant="success" size="sm" className="me-2" onClick={() => openRoomModal(service)}>Thêm phòng</Button>}
+                                                <Button variant="warning" size="sm" className="me-2" onClick={() => openEditService(service)}>Sửa</Button>
+                                                <Button variant="danger" size="sm" onClick={() => deleteService(service.id)}>Xóa</Button>
                                             </td>
                                         </tr>
                                     )) : (
-                                        <tr><td colSpan="5" className="text-center p-4 text-muted">Chưa có dịch vụ nào.</td></tr>
+                                        <tr><td colSpan={isHotel ? 4 : 5} className="text-center p-4 text-muted">Chưa có dịch vụ nào.</td></tr>
                                     )}
                                 </tbody>
                             </Table>
@@ -279,34 +530,17 @@ const ProviderDashboard = () => {
                     </div>
                 )}
 
-                {/* TAB 3: ĐƠN ĐẶT HÀNG */}
-                {activeTab === 'bookings' && (
-                    <div>
-                        <h4 className="fw-bold mb-3">Danh sách đơn đặt hàng</h4>
-                        <Card className="border-0 shadow-sm p-4 text-center text-muted">
-                            Tính năng quản lý đơn hàng đang được đồng bộ...
-                        </Card>
-                    </div>
-                )}
+                {activeTab === 'bookings' && <div><h4 className="fw-bold mb-3">Danh sách đơn đặt hàng</h4><Card className="border-0 shadow-sm p-4 text-center text-muted">Tính năng quản lý đơn hàng đang được đồng bộ...</Card></div>}
 
-                {/* TAB 4: THỐNG KÊ */}
                 {activeTab === 'stats' && (
                     <div>
                         <h4 className="fw-bold mb-3">Lọc thống kê</h4>
                         <Card className="p-3 border-0 shadow-sm mb-3">
                             <Form onSubmit={(e) => { e.preventDefault(); fetchStats(); }}>
                                 <Row className="align-items-end">
-                                    <Col md={4} className="mb-2">
-                                        <Form.Label className="small text-muted">Từ ngày</Form.Label>
-                                        <Form.Control type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
-                                    </Col>
-                                    <Col md={4} className="mb-2">
-                                        <Form.Label className="small text-muted">Đến ngày</Form.Label>
-                                        <Form.Control type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
-                                    </Col>
-                                    <Col md={4} className="mb-2">
-                                        <Button type="submit" variant="primary" className="w-100">Lọc kết quả</Button>
-                                    </Col>
+                                    <Col md={4} className="mb-2"><Form.Label className="small text-muted">Từ ngày</Form.Label><Form.Control type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></Col>
+                                    <Col md={4} className="mb-2"><Form.Label className="small text-muted">Đến ngày</Form.Label><Form.Control type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></Col>
+                                    <Col md={4} className="mb-2"><Button type="submit" variant="primary" className="w-100">Lọc kết quả</Button></Col>
                                 </Row>
                             </Form>
                         </Card>
@@ -314,34 +548,26 @@ const ProviderDashboard = () => {
                 )}
             </Col>
 
-            {/* MODAL THÊM DỊCH VỤ GỌN GÀNG */}
-            <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title className="fw-bold">Thêm dịch vụ mới</Modal.Title>
-                </Modal.Header>
-                <Form onSubmit={handleAddService}>
+            <Modal show={showServiceModal} onHide={() => { setShowServiceModal(false); resetServiceModal(); }} centered size="lg">
+                <Modal.Header closeButton><Modal.Title className="fw-bold">{editingService ? 'Sửa dịch vụ' : 'Thêm dịch vụ mới'}</Modal.Title></Modal.Header>
+                <Form onSubmit={saveService}>
                     <Modal.Body>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Tên dịch vụ</Form.Label>
-                            <Form.Control type="text" required value={newService.name} onChange={e => setNewService({...newService, name: e.target.value})} placeholder="Nhập tên dịch vụ..." />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Loại hình</Form.Label>
-                            <Form.Select value={newService.type} onChange={e => setNewService({...newService, type: e.target.value})}>
-                                <option value="HOTEL">Khách Sạn</option>
-                                <option value="TOUR">Tour Du Lịch</option>
-                                <option value="FLIGHT">Chuyến Bay</option>
-                                <option value="BUS">Xe Khách</option>
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Giá bán (VNĐ)</Form.Label>
-                            <Form.Control type="number" required value={newService.price} onChange={e => setNewService({...newService, price: e.target.value})} placeholder="Nhập giá..." />
-                        </Form.Group>
+                        {serviceFields()}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowModal(false)}>Hủy</Button>
+                        <Button variant="secondary" onClick={() => { setShowServiceModal(false); resetServiceModal(); }}>Hủy</Button>
                         <Button type="submit" variant="success">Lưu lại</Button>
+                    </Modal.Footer>
+                </Form>
+            </Modal>
+
+            <Modal show={showRoomModal} onHide={() => { setShowRoomModal(false); resetRoomModal(); }} centered size="lg">
+                <Modal.Header closeButton><Modal.Title className="fw-bold">Thêm phòng mới</Modal.Title></Modal.Header>
+                <Form onSubmit={saveRoom}>
+                    <Modal.Body>{roomFields}</Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => { setShowRoomModal(false); resetRoomModal(); }}>Hủy</Button>
+                        <Button type="submit" variant="success">Lưu phòng</Button>
                     </Modal.Footer>
                 </Form>
             </Modal>

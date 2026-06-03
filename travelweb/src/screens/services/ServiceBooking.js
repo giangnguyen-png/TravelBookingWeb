@@ -128,7 +128,8 @@ const handleBookingSubmit = async (e) => {
     
         await authApis().post('/payments', {
             bookingId: String(res.data.id),
-            paymentMethod: paymentMethod
+            paymentMethod: paymentMethod,
+            paymentStatus: 'PAID'
         });
 
         console.log("Backend phản hồi thành công:", res.data);

@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { Container, Nav, Navbar } from 'react-bootstrap';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import cookies from 'react-cookies';
 import { MyDispatchContext, MyUserContext } from '../configs/MyContext';
 
@@ -10,14 +10,10 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // (Đã xóa hàm useEffect bẻ lái gây xung đột ở đây)
-
   const logout = () => {
     cookies.remove('token', { path: '/' });
-    cookies.remove('user', { path: '/' }); // Dọn sạch user khỏi bộ nhớ
-    dispatch({
-      type: 'logout',
-    });
+    cookies.remove('user', { path: '/' });
+    dispatch({ type: 'logout' });
     navigate('/user');
   };
 
@@ -42,9 +38,11 @@ const Header = () => {
         </div>
       );
     }
+
     if (location.pathname === '/user') {
       return null;
     }
+
     return (
       <Link
         to="/user"
@@ -67,6 +65,9 @@ const Header = () => {
           <Nav className="me-auto">
             <Nav.Link as={Link} to="/">
               Trang chủ
+            </Nav.Link>
+            <Nav.Link as={Link} to="/compare">
+              So sánh dịch vụ
             </Nav.Link>
           </Nav>
           <Nav className="align-items-center">

@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import ServiceDetail from './screens/services/ServiceDetail';
 import ServiceBooking from './screens/services/ServiceBooking';
 import ProviderDashboard from './screens/provider/ProviderDashboard';
+import CompareServices from './screens/home/CompareServices';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function myReducer(state, action) {
@@ -36,6 +37,7 @@ const AppContent = () => {
         <Route path="/user" element={<User />} />
         <Route path="/services/:type/:id" element={<ServiceDetail />} />
         <Route path="/booking/:type/:id" element={<ServiceBooking />} />
+        <Route path="/compare" element={<CompareServices />} />
         <Route path="/provider" element={<ProviderDashboard />} />
       </Routes>
 
