@@ -9,6 +9,7 @@ import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -78,7 +79,7 @@ public class Hotels implements Serializable {
     @ManyToOne(optional = false)
     @JsonIgnore
     private ProviderProfiles providerId;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "hotelId")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "hotelId", fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<HotelRooms> hotelRoomsSet;
 
@@ -197,6 +198,14 @@ public class Hotels implements Serializable {
     @Override
     public String toString() {
         return "com.mycompany.pojo.Hotels[ id=" + id + " ]";
+    }
+    public Long getPrice() {
+        if (this.hotelRoomsSet != null && !this.hotelRoomsSet.isEmpty()) {
+            // Tự động lấy giá của phòng đầu tiên trong danh sạn làm giá gốc cho khách sạn
+            // Chuyển đổi từ BigDecimal của pricePerNight sang Long để đồng bộ với Tour/Vé xe
+            return this.hotelRoomsSet.iterator().next().getPricePerNight().longValue();
+        }
+    return 0L;
     }
     
 }

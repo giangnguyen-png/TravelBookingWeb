@@ -27,6 +27,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  *
  * @author nguyen
@@ -43,8 +47,9 @@ public class ApiAuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @PostMapping("/auth/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> params) {
+    @PostMapping(value = "/auth/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<?> register(@RequestParam Map<String, String> params, // Sửa @ModelAttribute thành @RequestParam
+                                  @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) {
         String username = params.get("username");
         String email = params.get("email");
 
