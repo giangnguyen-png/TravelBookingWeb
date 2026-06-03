@@ -14,7 +14,7 @@
                         <div class="col-md-8">
                             <label class="form-label">Provider</label>
                             <select class="form-select" name="providerId">
-                                <option value="">Chọn provider</option>
+                                <option value="">Chọn nhà cung cấp</option>
                                 <option th:each="p : ${providers}" th:value="${p.id}" th:text="${p.companyName + ' - ' + p.businessType}"></option>
                             </select>
                         </div>
