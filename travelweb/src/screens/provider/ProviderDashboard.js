@@ -10,8 +10,8 @@ import ProviderStats from './ProviderStats';
 
 const labels = {
     HOTEL: 'Khách sạn',
-    TOUR_COMPANY: 'Công ty tour',
-    AIRLINE: 'Hãng bay',
+    TOUR_COMPANY: 'Công ty du lịch',
+    AIRLINE: 'Hãng hàng không',
     BUS_COMPANY: 'Nhà xe'
 };
 
@@ -122,7 +122,7 @@ const ProviderDashboard = () => {
             const res = await authApis().get(endpoints['provider-profile']);
             setProviderProfile(res.data);
         } catch (err) {
-            setError('Không tìm thấy h� sơ nhà cung cấp.');
+            setError('Không tìm thấy hồ sơ nhà cung cấp.');
         }
     };
 
@@ -131,7 +131,7 @@ const ProviderDashboard = () => {
             const res = await Apis.get(endpoints.locations);
             setLocations(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            console.error('L�i lấy ��9a �iỒm:', err);
+            console.error('Lỗi lấy địa điểm:', err);
         }
     };
 
@@ -143,7 +143,7 @@ const ProviderDashboard = () => {
             });
             setStats(res.data);
         } catch (err) {
-            console.error('L�i lấy th�ng kê t�"ng quan:', err);
+            console.error('Lỗi lấy thống kê tổng quan:', err);
         }
     }, [providerId, fromDate, toDate]);
 
@@ -187,7 +187,7 @@ const ProviderDashboard = () => {
             setMonthlyData(Object.values(monthlyMap));
             setYearlyData(Object.values(yearlyMap).sort((a, b) => a.year - b.year));
         } catch (err) {
-            console.error('L�i lấy mảng �ơn hàng vẽ biỒu ��:', err);
+            console.error('Lỗi lấy danh sách đơn hàng để vẽ biểu đồ:', err);
         }
     }, [providerId]);
 
@@ -197,7 +197,7 @@ const ProviderDashboard = () => {
             const res = await authApis().get(endpoints.services, { params: { providerId } });
             setServices(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            console.error('L�i lấy d�9ch vụ:', err);
+            console.error('Lỗi lấy dịch vụ:', err);
         }
     }, [providerId]);
 
@@ -217,7 +217,7 @@ const ProviderDashboard = () => {
     }, [providerId, fetchStats, fetchServices, fetchAdvancedStatsFromBE]);
 
     const logout = () => {
-        if (window.confirm('Bạn có chắc chắn mu�n �Ēng xuất?')) {
+        if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
             cookies.remove('token', { path: '/' });
             cookies.remove('user', { path: '/' });
             dispatch({ type: 'logout' });
@@ -335,9 +335,9 @@ const ProviderDashboard = () => {
 
             closeServiceModal();
             fetchServices();
-            alert(editingService ? 'Cập nhật d�9ch vụ thành công!' : 'Thêm d�9ch vụ thành công!');
+            alert(editingService ? 'Cập nhật dịch vụ thành công!' : 'Thêm dịch vụ thành công!');
         } catch (err) {
-            setError(err.response?.data || 'Không thỒ lưu d�9ch vụ.');
+            setError(err.response?.data || 'Không thể lưu dịch vụ.');
         }
     };
 
@@ -349,18 +349,18 @@ const ProviderDashboard = () => {
             closeRoomModal();
             alert('Thêm phòng thành công!');
         } catch (err) {
-            setError(err.response?.data || 'Không thỒ thêm phòng.');
+            setError(err.response?.data || 'Không thể thêm phòng.');
         }
     };
 
     const deleteService = async (id) => {
-        if (!window.confirm('Bạn có chắc chắn mu�n xóa d�9ch vụ này?')) return;
+        if (!window.confirm('Bạn có chắc chắn muốn xóa dịch vụ này?')) return;
         try {
             await authApis().delete(`${endpoints.services}/${id}`, { params: { providerId } });
             fetchServices();
             alert('Xóa thành công!');
         } catch (err) {
-            alert(err.response?.data || 'Không thỒ xóa d�9ch vụ.');
+            alert(err.response?.data || 'Không thể xóa dịch vụ.');
         }
     };
 
@@ -369,7 +369,7 @@ const ProviderDashboard = () => {
             <div className="container mt-5 text-center">
                 <Card className="p-4 border-danger">
                     <h4 className="text-danger">Không có quyền truy cập!</h4>
-                    <p className="text-muted">Vui lòng �Ēng nhập tài khoản nhà cung cấp.</p>
+                    <p className="text-muted">Vui lòng đăng nhập bằng tài khoản nhà cung cấp.</p>
                 </Card>
             </div>
         );
@@ -382,24 +382,24 @@ const ProviderDashboard = () => {
                     <h1 className="text-center mb-4">Travel Provider</h1>
                     <hr className="bg-secondary" />
                     <Nav className="flex-column">
-                        <Nav.Link onClick={() => setActiveTab('overview')} className={`text-white mb-3 ${activeTab === 'overview' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>T�"ng quan</Nav.Link>
-                        <Nav.Link onClick={() => setActiveTab('services')} className={`text-white mb-3 ${activeTab === 'services' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Quản lý d�9ch vụ</Nav.Link>
-                        <Nav.Link onClick={() => setActiveTab('bookings')} className={`text-white mb-3 ${activeTab === 'bookings' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Đơn �ặt hàng</Nav.Link>
-                        <Nav.Link onClick={() => setActiveTab('stats')} className={`text-white mb-3 ${activeTab === 'stats' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Th�ng kê</Nav.Link>
+                        <Nav.Link onClick={() => setActiveTab('overview')} className={`text-white mb-3 ${activeTab === 'overview' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Tổng quan</Nav.Link>
+                        <Nav.Link onClick={() => setActiveTab('services')} className={`text-white mb-3 ${activeTab === 'services' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Quản lý dịch vụ</Nav.Link>
+                        <Nav.Link onClick={() => setActiveTab('bookings')} className={`text-white mb-3 ${activeTab === 'bookings' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Đơn đặt hàng</Nav.Link>
+                        <Nav.Link onClick={() => setActiveTab('stats')} className={`text-white mb-3 ${activeTab === 'stats' ? 'fw-bold text-warning' : ''}`} style={{ cursor: 'pointer' }}>Thống kê</Nav.Link>
                     </Nav>
                 </div>
-                <div><hr className="bg-secondary" /><Button variant="danger" className="w-100 fw-bold" onClick={logout}>ĐĒng xuất</Button></div>
+                <div><hr className="bg-secondary" /><Button variant="danger" className="w-100 fw-bold" onClick={logout}>Đăng xuất</Button></div>
             </Col>
 
             <Col md={9} className="p-4 bg-light">
                 {error && <Alert variant="danger">{error}</Alert>}
                 {activeTab === 'overview' && (
                     <div>
-                        <h3 className="mb-2 fw-bold">T�"ng quan h�! th�ng</h3>
+                        <h3 className="mb-2 fw-bold">Tổng quan hệ thống</h3>
                         <p className="text-muted mb-4">Loại hình: <strong>{labels[businessType] || 'Đang tải...'}</strong></p>
                         <Row>
-                            <Col md={6} className="mb-3"><Card className="p-3 shadow-sm border-0 bg-white"><Card.Body><h6 className="text-muted">T�NG DOANH THU</h6><h3 className="text-primary fw-bold">{stats.revenue?.toLocaleString() || 0} VNĐ</h3></Card.Body></Card></Col>
-                            <Col md={6} className="mb-3"><Card className="p-3 shadow-sm border-0 bg-white"><Card.Body><h6 className="text-muted">T�NG ĐƠN ĐẶT D�`CH VỤ</h6><h3 className="text-success fw-bold">{stats.bookings || 0} �ơn</h3></Card.Body></Card></Col>
+                            <Col md={6} className="mb-3"><Card className="p-3 shadow-sm border-0 bg-white"><Card.Body><h6 className="text-muted">TỔNG DOANH THU</h6><h3 className="text-primary fw-bold">{stats.revenue?.toLocaleString('vi-VN') || 0} VNĐ</h3></Card.Body></Card></Col>
+                            <Col md={6} className="mb-3"><Card className="p-3 shadow-sm border-0 bg-white"><Card.Body><h6 className="text-muted">TỔNG ĐƠN ĐẶT DỊCH VỤ</h6><h3 className="text-success fw-bold">{stats.bookings || 0} đơn</h3></Card.Body></Card></Col>
                         </Row>
                     </div>
                 )}

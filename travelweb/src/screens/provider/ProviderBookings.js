@@ -13,19 +13,19 @@ const bookingCustomer = (booking) => booking.customerId || booking.customer || {
 
 const ProviderBookings = ({ providerBookings }) => (
     <div>
-        <h4 className="fw-bold mb-3">Danh sách �ơn �ặt hàng</h4>
+        <h4 className="fw-bold mb-3">Danh sách đơn đặt hàng</h4>
         <Card className="border-0 shadow-sm">
             <Table responsive hover className="m-0 align-middle">
                 <thead className="table-secondary">
                     <tr>
-                        <th>Mã �ơn</th>
+                        <th>Mã đơn</th>
                         <th>Khách hàng</th>
-                        <th>Username</th>
+                        <th>Tên đăng nhập</th>
                         <th>Email</th>
-                        <th>Loại �ặt</th>
+                        <th>Loại đặt</th>
                         <th>Trạng thái</th>
-                        <th>T�"ng tiền</th>
-                        <th>Ngày �ặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Ngày đặt</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,7 +49,7 @@ const ProviderBookings = ({ providerBookings }) => (
                         );
                     }) : (
                         <tr>
-                            <td colSpan={8} className="text-center p-4 text-muted">Chưa có khách hàng nào �ặt d�9ch vụ của bạn.</td>
+                            <td colSpan={8} className="text-center p-4 text-muted">Chưa có khách hàng nào đặt dịch vụ của bạn.</td>
                         </tr>
                     )}
                 </tbody>
