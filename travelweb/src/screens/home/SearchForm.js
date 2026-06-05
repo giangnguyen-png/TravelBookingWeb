@@ -63,7 +63,7 @@ const SearchForm = ({ onSearchSuccess }) => {
         >
             <Card.Body className="p-4">
                 <h4 className="fw-bold mb-4 text-center">
-                    🔍 Tìm kiếm dịch vụ du lịch
+                     Tìm kiếm dịch vụ du lịch
                 </h4>
                 <Row className="g-3">
                     <Col md={3}>

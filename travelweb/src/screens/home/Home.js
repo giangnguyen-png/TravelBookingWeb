@@ -139,7 +139,7 @@ const Home = () => {
 
             <Container className="mt-5">
                 <h2 className="fw-bold mb-4">
-                    {isSearched ? " 🔍  Kết quả tìm kiếm phù hợp" : " 🔥  Dịch vụ nổi bật"}
+                    {isSearched ? "  Kết quả tìm kiếm phù hợp" : "  Dịch vụ nổi bật"}
                 </h2>
                 {loading ? (
                     <MySpinner />
