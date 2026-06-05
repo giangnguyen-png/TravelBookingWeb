@@ -1,4 +1,3 @@
-
 package com.mycompany.controllers;
 
 import com.mycompany.enums.BusinessType;
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
-
 @RestController
 @RequestMapping("/api")
 @CrossOrigin
@@ -42,8 +40,8 @@ public class ApiAuthController {
     private PasswordEncoder passwordEncoder;
 
     @PostMapping(value = "/auth/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<?> register(@RequestParam Map<String, String> params,
-                                  @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) {
+    public ResponseEntity<?> register(@RequestParam Map<String, String> params,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) {
         String username = params.get("username");
         String email = params.get("email");
 
